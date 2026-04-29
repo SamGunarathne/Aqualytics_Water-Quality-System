@@ -1,12 +1,12 @@
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 
-// 🔐 Load Firebase Key
-const serviceAccount = require('./aqualytics-649ed-firebase-adminsdk-fbsvc-c339c5b765.json');
+// 🔐 Load Firebase key from environment variable
+const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://aqualytics-649ed-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  databaseURL: process.env.FIREBASE_DB_URL
 });
 
 const db = admin.database();
@@ -15,7 +15,7 @@ const db = admin.database();
 const client = mqtt.connect('mqtt://broker.hivemq.com');
 
 client.on('connect', () => {
-  console.log("MQTT Connected");
+  console.log("✅ MQTT Connected");
   client.subscribe('water/quality');
 });
 
@@ -31,12 +31,11 @@ client.on('message', (topic, message) => {
       timestamp: Date.now()
     };
 
-    // 📤 Push to Firebase
     db.ref('waterData').push(payload);
 
-    console.log("Data saved:", payload);
+    console.log("📤 Data saved:", payload);
 
   } catch (err) {
-    console.error("Error:", err);
+    console.error("❌ Error:", err);
   }
 });
