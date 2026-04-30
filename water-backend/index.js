@@ -28,7 +28,7 @@ client.on('message', (topic, message) => {
       temperature: data.temperature,
       tds: data.tds,
       turbidity: data.turbidity,
-      timestamp: admin.database.ServerValue.TIMESTAMP
+      timestamp: Date.now()
     };
 
     // 📤 Push to Firebase
