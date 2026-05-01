@@ -33,9 +33,13 @@ client.on('message', (topic, message) => {
 
     db.ref('waterData').push(payload);
 
-    console.log("📤 Data saved:", payload);
+    if (process.env.NODE_ENV === "development") {
+      console.log("📤 Data saved:", payload);
+    } else {
+      console.log("📤 Data saved");
+    }
 
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("❌ Error:", err.message);
   }
 });
