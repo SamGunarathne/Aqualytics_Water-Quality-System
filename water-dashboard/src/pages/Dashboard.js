@@ -23,7 +23,7 @@ function Dashboard() {
   const isFirstLoad = useRef(true);
 
   useEffect(() => {
-    const waterRef = ref(db, "water");
+    const waterRef = ref(db, "waterData");
 
     const unsubscribe = onValue(waterRef, (snapshot) => {
       const val = snapshot.val();

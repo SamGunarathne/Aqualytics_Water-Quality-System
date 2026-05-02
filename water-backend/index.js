@@ -32,7 +32,7 @@ client.on('message', (topic, message) => {
     };
 
     // 📤 Push to Firebase
-    db.ref('water').push(payload);
+    db.ref('waterData').push(payload);
 
     console.log("Data saved:", payload);
 
