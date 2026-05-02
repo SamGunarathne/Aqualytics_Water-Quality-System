@@ -29,18 +29,29 @@ function Dashboard() {
       const val = snapshot.val();
 
       if (!val) {
-        console.log("⚠️ No Firebase data at /water");
+        console.log("⚠️ No Firebase data at /waterData");
         return;
       }
 
-      console.log("🔥 LIVE FIREBASE UPDATE:", val);
+      // 👉 Convert object → array
+      const dataArray = Object.values(val);
+
+      // 👉 Get latest reading
+      const latest = dataArray[dataArray.length - 1];
+
+      if (!val) {
+        console.log("⚠️ No Firebase data at /waterData");
+        return;
+      }
+
+      console.log("🔥 LIVE FIREBASE UPDATE:", latest);
 
       // ✅ 1. Update cards (real-time)
       setData({
-        ph: Number(val.ph ?? 0),
-        turbidity: Number(val.turbidity ?? 0),
-        temperature: Number(val.temperature ?? 0),
-        tds: Number(val.tds ?? 0)
+        ph: Number(latest.ph ?? 0),
+        turbidity: Number(latest.turbidity ?? 0),
+        temperature: Number(latest.temperature ?? 0),
+        tds: Number(latest.tds ?? 0)
       });
 
       // ❗ skip first load for cleaner chart (optional but recommended)
@@ -53,10 +64,10 @@ function Dashboard() {
       setHistory((prev) => {
         const newPoint = {
           time: new Date().toLocaleTimeString(),
-          ph: val.ph ?? 0,
-          turbidity: val.turbidity ?? 0,
-          temperature: val.temperature ?? 0,
-          tds: val.tds ?? 0
+          ph: latest.ph ?? 0,
+          turbidity: latest.turbidity ?? 0,
+          temperature: latest.temperature ?? 0,
+          tds: latest.tds ?? 0
         };
 
         const updated = [...prev, newPoint];
