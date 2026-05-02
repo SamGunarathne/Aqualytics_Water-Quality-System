@@ -1,0 +1,220 @@
+/* =========================
+   GLOBAL RESET + SCADA BASE
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: #050b1a;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* subtle SCADA grid background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(56,189,248,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+.app-container {
+  display: flex;
+}
+
+/* =========================
+   SIDEBAR (CONTROL PANEL)
+========================= */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #020617;
+  border-right: 1px solid #1e293b;
+  padding: 20px;
+  box-shadow: 5px 0 20px rgba(0,0,0,0.4);
+}
+
+.sidebar h2 {
+  color: #38bdf8;
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+}
+
+/* navigation */
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar ul li {
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s;
+  border-left: 3px solid transparent;
+}
+
+/* SCADA highlight hover */
+.sidebar ul li:hover {
+  background: rgba(56,189,248,0.08);
+  border-left: 3px solid #38bdf8;
+  transform: translateX(6px);
+  color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56,189,248,0.2);
+}
+
+/* =========================
+   NAVBAR (STATUS BAR)
+========================= */
+.navbar {
+  background: rgba(2,6,23,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1e293b;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* system status indicator */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #22c55e;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* =========================
+   CARDS (SENSOR PANELS)
+========================= */
+.card-container {
+  display: flex;
+  gap: 18px;
+  padding: 20px;
+}
+
+.card {
+  flex: 1;
+  background: linear-gradient(145deg, #020617, #0b1224);
+  border: 1px solid #1e293b;
+  padding: 18px;
+  border-radius: 14px;
+  position: relative;
+  transition: 0.3s;
+  overflow: hidden;
+}
+
+/* glowing border scan effect */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(120deg, transparent, rgba(56,189,248,0.4), transparent);
+  transform: translateX(-100%);
+  transition: 0.5s;
+}
+
+.card:hover::before {
+  transform: translateX(100%);
+}
+
+/* hover lift */
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(56,189,248,0.2);
+  border-color: #38bdf8;
+}
+
+/* SCADA labels */
+.card h4 {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.card h2 {
+  color: #38bdf8;
+  font-size: 28px;
+}
+
+/* =========================
+   GRID SECTION
+========================= */
+.grid {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* =========================
+   CHART PANEL (CONTROL GRAPH)
+========================= */
+.chart {
+  flex: 2;
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  padding: 18px;
+  transition: 0.3s;
+}
+
+.chart:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 25px rgba(56,189,248,0.15);
+}
+
+/* =========================
+   ALERT PANEL (DANGER SYSTEM)
+========================= */
+.alerts {
+  flex: 1;
+  background: rgba(127,29,29,0.15);
+  border: 1px solid #7f1d1d;
+  border-radius: 14px;
+  padding: 18px;
+  transition: 0.3s;
+}
+
+.alerts:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 25px rgba(255,0,0,0.15);
+}
+
+.alerts h4 {
+  color: #f87171;
+}
+
+/* =========================
+   SCROLLBAR (INDUSTRIAL STYLE)
+========================= */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border-radius: 10px;
+}

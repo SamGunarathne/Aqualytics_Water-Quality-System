@@ -1,96 +1,103 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../firebase";
-import { ref, onChildAdded } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-} from "chart.js";
+import Sidebar from "../components/Sidebar";
+import Navbar from "../components/Navbar";
+import Card from "../components/Card";
+import Alerts from "../components/Alerts";
+import WaterChart from "../components/WaterChart";
 
-import { Line } from "react-chartjs-2";
-
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale);
-
-const Dashboard = () => {
-  const [labels, setLabels] = useState([]);
-  const [phData, setPhData] = useState([]);
-  const [tempData, setTempData] = useState([]);
-  const [tdsData, setTdsData] = useState([]);
-  const [turbData, setTurbData] = useState([]);
-
-  const [latest, setLatest] = useState({});
-
-  useEffect(() => {
-    const dataRef = ref(db, "waterData");
-
-    onChildAdded(dataRef, (snapshot) => {
-      const data = snapshot.val();
-
-      const time = new Date(data.timestamp).toLocaleTimeString();
-
-      setLabels((prev) => [...prev.slice(-9), time]);
-      setPhData((prev) => [...prev.slice(-9), data.ph]);
-      setTempData((prev) => [...prev.slice(-9), data.temperature]);
-      setTdsData((prev) => [...prev.slice(-9), data.tds]);
-      setTurbData((prev) => [...prev.slice(-9), data.turbidity]);
-
-      setLatest(data);
-    });
-  }, []);
-
-  const createChart = (label, data) => ({
-    labels,
-    datasets: [
-      {
-        label,
-        data,
-        fill: false,
-        tension: 0.3,
-      },
-    ],
+function Dashboard() {
+  // ✅ live sensor state
+  const [data, setData] = useState({
+    ph: 0,
+    turbidity: 0,
+    temperature: 0,
+    tds: 0
   });
 
+  const [history, setHistory] = useState([]);
+
+  // 🔥 prevents duplicate updates / memory issues
+  const isFirstLoad = useRef(true);
+
+  useEffect(() => {
+    const waterRef = ref(db, "water");
+
+    const unsubscribe = onValue(waterRef, (snapshot) => {
+      const val = snapshot.val();
+
+      if (!val) {
+        console.log("⚠️ No Firebase data at /water");
+        return;
+      }
+
+      console.log("🔥 LIVE FIREBASE UPDATE:", val);
+
+      // ✅ 1. Update cards (real-time)
+      setData({
+        ph: Number(val.ph ?? 0),
+        turbidity: Number(val.turbidity ?? 0),
+        temperature: Number(val.temperature ?? 0),
+        tds: Number(val.tds ?? 0)
+      });
+
+      // ❗ skip first load for cleaner chart (optional but recommended)
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        return;
+      }
+
+      // ✅ 2. Update chart history (LIVE STREAM)
+      setHistory((prev) => {
+        const newPoint = {
+          time: new Date().toLocaleTimeString(),
+          ph: val.ph ?? 0,
+          turbidity: val.turbidity ?? 0,
+          temperature: val.temperature ?? 0,
+          tds: val.tds ?? 0
+        };
+
+        const updated = [...prev, newPoint];
+
+        // keep last 10 points (smooth UI)
+        return updated.slice(-10);
+      });
+    });
+
+    // cleanup
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div style={{ padding: "20px" }}>
-      
-      {/* 🔷 Latest Values */}
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Latest Readings</h3>
-        <p>pH: {latest.ph}</p>
-        <p>Temperature: {latest.temperature} °C</p>
-        <p>TDS: {latest.tds} ppm</p>
-        <p>Turbidity: {latest.turbidity} NTU</p>
-      </div>
+    <div style={{ display: "flex" }}>
+      <Sidebar />
 
-      {/* 🔷 Charts */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-        
-        <div>
-          <h4>pH Level</h4>
-          <Line data={createChart("pH", phData)} />
+      <div style={{ flex: 1, background: "#0f172a", minHeight: "100vh" }}>
+        <Navbar />
+
+        {/* 🔥 LIVE CARDS */}
+        <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+          <Card title="pH" value={data.ph} />
+          <Card title="Turbidity" value={data.turbidity} unit="NTU" />
+          <Card title="Temperature" value={data.temperature} unit="°C" />
+          <Card title="TDS" value={data.tds} unit="ppm" />
         </div>
 
-        <div>
-          <h4>Temperature</h4>
-          <Line data={createChart("Temperature", tempData)} />
-        </div>
+        {/* 🔥 LIVE CHART + ALERTS */}
+        <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+          <div style={{ flex: 2 }}>
+            <WaterChart history={history} />
+          </div>
 
-        <div>
-          <h4>TDS</h4>
-          <Line data={createChart("TDS", tdsData)} />
+          <div style={{ flex: 1 }}>
+            <Alerts data={data} />
+          </div>
         </div>
-
-        <div>
-          <h4>Turbidity</h4>
-          <Line data={createChart("Turbidity", turbData)} />
-        </div>
-
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;
