@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { FaTachometerAlt, FaWater, FaBell, FaCog } from "react-icons/fa";
+import {
+  FaTachometerAlt,
+  FaWater,
+  FaBell,
+  FaCog
+} from "react-icons/fa";
 
-function Sidebar() {
+function Sidebar({ setPage }) {
+
   const [active, setActive] = useState("Dashboard");
 
   const menuItems = [
@@ -11,19 +17,38 @@ function Sidebar() {
     { name: "Settings", icon: <FaCog /> }
   ];
 
+  // 🔥 HANDLE PAGE SWITCH
+  const handleMenuClick = (name) => {
+    setActive(name);
+
+    if (name === "Dashboard") {
+      setPage("dashboard");
+    }
+
+    if (name === "Water Data") {
+      setPage("water");
+    }
+
+    if (name === "Alerts") {
+      setPage("alerts");
+    }
+
+    if (name === "Settings") {
+      setPage("settings");
+    }
+  };
+
   return (
     <div style={styles.sidebar}>
-      
-      {/* 🔷 LOGO */}
+
       <div>
         <h2 style={styles.logo}>AQUALYTICS</h2>
 
-        {/* 🔷 MENU */}
         <ul style={styles.menu}>
           {menuItems.map((item) => (
             <li
               key={item.name}
-              onClick={() => setActive(item.name)}
+              onClick={() => handleMenuClick(item.name)}
               style={{
                 ...styles.item,
                 ...(active === item.name ? styles.active : {})
@@ -36,11 +61,11 @@ function Sidebar() {
         </ul>
       </div>
 
-      {/* 🔷 FOOTER */}
       <div style={styles.footer}>
         <p>🟢 System Online</p>
         <small>v1.0.0</small>
       </div>
+
     </div>
   );
 }
@@ -82,7 +107,6 @@ const styles = {
     color: "#94a3b8"
   },
 
-  /* 🔥 ACTIVE ITEM */
   active: {
     background: "rgba(56,189,248,0.15)",
     color: "#38bdf8",
@@ -91,7 +115,6 @@ const styles = {
     borderLeft: "3px solid #38bdf8"
   },
 
-  /* 🔥 ICON */
   icon: {
     fontSize: "16px"
   },
