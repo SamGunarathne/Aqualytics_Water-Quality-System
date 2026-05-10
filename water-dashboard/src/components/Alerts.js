@@ -22,14 +22,6 @@ function Alerts({ data }) {
       list.push({ type: "warning", msg: "High TDS level", level: "WARNING" });
     }
 
-    if (data.temperature > 20) {
-      list.push({ type: "danger", msg: "High temperature level", level: "CRITICAL" });
-    }
-
-    if (data.temperature < 30) {
-      list.push({ type: "danger", msg: "High temperature level", level: "CRITICAL" });
-    }
-
     if (list.length === 0) {
       list.push({ type: "safe", msg: "All systems normal", level: "OK" });
     }
