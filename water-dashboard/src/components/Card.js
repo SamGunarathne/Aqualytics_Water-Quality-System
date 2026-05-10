@@ -12,6 +12,15 @@ function Card({ title, value, unit }) {
       return "safe";
     }
 
+    if (title === "Temperature") {
+      if (value < 20 || value > 30) return "danger";
+      return "safe";
+    }
+
+    if (title === "TDS") {
+      if (value < 300 || value > 600) return "Warning";
+      return "safe";
+    }
     return "normal";
   };
 
