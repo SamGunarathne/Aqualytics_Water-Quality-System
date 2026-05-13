@@ -1,6 +1,6 @@
-function Card({ title, value, unit }) {
+function Card({ title, value, unit, darkMode }) {
 
-  // 🔥 simple status logic (you can customize later)
+  // 🔥 status logic
   const getStatus = () => {
     if (title === "pH") {
       if (value < 6.5 || value > 8.5) return "danger";
@@ -18,84 +18,142 @@ function Card({ title, value, unit }) {
     }
 
     if (title === "TDS") {
-      if (value < 300 || value > 600) return "Warning";
+      if (value < 300 || value > 600) return "warning";
       return "safe";
     }
+
     return "normal";
   };
 
   const status = getStatus();
 
   return (
-    <div style={{ ...styles.card, ...styles[status] }}>
-      
-      {/* status dot */}
-      <div style={{ ...styles.dot, ...styles.dotStatus[status] }}></div>
+    <div
+      style={{
+        ...styles.card,
 
-      <h4 style={styles.title}>{title}</h4>
+        background: darkMode
+          ? "linear-gradient(145deg, #020617, #0b1224)"
+          : "#ffffff",
 
-      <h2 style={styles.value}>
-        {value} <span style={styles.unit}>{unit}</span>
+        color: darkMode ? "white" : "#0f172a",
+
+        border: darkMode
+          ? "1px solid #1e293b"
+          : "1px solid #cbd5e1",
+
+        boxShadow:
+          status === "safe"
+            ? darkMode
+              ? "0 0 15px rgba(34,197,94,0.2)"
+              : "0 0 10px rgba(34,197,94,0.15)"
+            : status === "warning"
+            ? darkMode
+              ? "0 0 15px rgba(234,179,8,0.2)"
+              : "0 0 10px rgba(234,179,8,0.15)"
+            : darkMode
+            ? "0 0 20px rgba(239,68,68,0.25)"
+            : "0 0 12px rgba(239,68,68,0.15)"
+      }}
+    >
+
+      {/* 🔴 STATUS DOT */}
+      <div
+        style={{
+          ...styles.dot,
+          background:
+            status === "safe"
+              ? "#22c55e"
+              : status === "warning"
+              ? "#eab308"
+              : "#ef4444",
+
+          boxShadow:
+            status === "safe"
+              ? "0 0 10px #22c55e"
+              : status === "warning"
+              ? "0 0 10px #eab308"
+              : "0 0 10px #ef4444"
+        }}
+      ></div>
+
+      {/* TITLE */}
+      <h4
+        style={{
+          ...styles.title,
+          color: darkMode ? "#94a3b8" : "#475569"
+        }}
+      >
+        {title}
+      </h4>
+
+      {/* VALUE */}
+      <h2
+        style={{
+          ...styles.value,
+          color: darkMode ? "#38bdf8" : "#0284c7"
+        }}
+      >
+        {value}{" "}
+        <span
+          style={{
+            ...styles.unit,
+            color: darkMode ? "#94a3b8" : "#475569"
+          }}
+        >
+          {unit}
+        </span>
       </h2>
 
-      <p style={styles.statusText}>{status.toUpperCase()}</p>
+      {/* STATUS TEXT */}
+      <p
+        style={{
+          ...styles.statusText,
+          color: darkMode ? "#cbd5e1" : "#334155"
+        }}
+      >
+        {status.toUpperCase()}
+      </p>
+
     </div>
   );
 }
 
 const styles = {
+
   card: {
-    background: "linear-gradient(145deg, #020617, #0b1224)",
-    color: "white",
-    padding: "18px",
+    padding: "40px",
     borderRadius: "14px",
-    width: "100%",
+    width: "80%",
     position: "relative",
     overflow: "hidden",
     transition: "0.3s",
-    border: "1px solid #1e293b",
-    boxShadow: "0 0 10px rgba(0,0,0,0.4)",
     cursor: "pointer"
   },
 
-  /* hover effect */
-  safe: {
-    boxShadow: "0 0 15px rgba(34,197,94,0.2)"
-  },
-
-  warning: {
-    boxShadow: "0 0 15px rgba(234,179,8,0.2)"
-  },
-
-  danger: {
-    boxShadow: "0 0 20px rgba(239,68,68,0.3)"
-  },
-
   title: {
-    color: "#94a3b8",
-    fontSize: "13px",
-    letterSpacing: "1px"
+    fontSize: "20px",
+    letterSpacing: "1px",
+    margin: 0
   },
 
   value: {
-    color: "#38bdf8",
     fontSize: "28px",
-    marginTop: "8px"
+    marginTop: "8px",
+    marginBottom: "0"
   },
 
   unit: {
-    fontSize: "14px",
-    color: "#94a3b8"
+    fontSize: "14px"
   },
 
   statusText: {
     fontSize: "11px",
     marginTop: "10px",
-    opacity: 0.7,
+    opacity: 0.8,
     letterSpacing: "1px"
   },
 
-  /* status dot */
   dot: {
     position: "absolute",
     top: "12px",
@@ -103,21 +161,6 @@ const styles = {
     width: "10px",
     height: "10px",
     borderRadius: "50%"
-  },
-
-  dotStatus: {
-    safe: {
-      background: "#22c55e",
-      boxShadow: "0 0 10px #22c55e"
-    },
-    warning: {
-      background: "#eab308",
-      boxShadow: "0 0 10px #eab308"
-    },
-    danger: {
-      background: "#ef4444",
-      boxShadow: "0 0 10px #ef4444"
-    }
   }
 };
 
