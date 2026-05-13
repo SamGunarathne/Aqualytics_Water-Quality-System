@@ -16,6 +16,11 @@ function Dashboard() {
   const [page, setPage] = useState("dashboard");
 
   // ===============================
+  // THEME MODE
+  // ===============================
+  const [darkMode, setDarkMode] = useState(true);
+
+  // ===============================
   // LIVE SENSOR DATA
   // ===============================
   const [data, setData] = useState({
@@ -48,15 +53,12 @@ function Dashboard() {
         return;
       }
 
-      // object → array
       const dataArray = Object.values(val);
 
-      // latest value
       const latest = dataArray[dataArray.length - 1];
 
       console.log("🔥 LIVE UPDATE:", latest);
 
-      // update cards
       setData({
         ph: Number(latest.ph ?? 0),
         turbidity: Number(latest.turbidity ?? 0),
@@ -64,13 +66,11 @@ function Dashboard() {
         tds: Number(latest.tds ?? 0)
       });
 
-      // skip first load
       if (isFirstLoad.current) {
         isFirstLoad.current = false;
         return;
       }
 
-      // update chart
       setHistory((prev) => {
 
         const newPoint = {
@@ -94,20 +94,41 @@ function Dashboard() {
   }, []);
 
   // ===============================
+  // DYNAMIC STYLES
+  // ===============================
+
+  const mainBackground = darkMode ? "#020817" : "#f1f5f9";
+
+  const cardBackground = darkMode ? "#0f172a" : "#ffffff";
+
+  const borderColor = darkMode
+    ? "1px solid #1e293b"
+    : "1px solid #cbd5e1";
+
+  const textColor = darkMode ? "#cbd5e1" : "#334155";
+
+  const titleColor = darkMode ? "#38bdf8" : "#0f172a";
+
+  // ===============================
   // MAIN UI
   // ===============================
+
   return (
 
     <div
       style={{
         display: "flex",
-        background: "#020817",
-        minHeight: "100vh"
+        background: mainBackground,
+        minHeight: "100vh",
+        transition: "0.3s"
       }}
     >
 
       {/* ================= SIDEBAR ================= */}
-      <Sidebar setPage={setPage} />
+      <Sidebar
+        setPage={setPage}
+        darkMode={darkMode}
+      />
 
       {/* ================= MAIN CONTENT ================= */}
       <div
@@ -119,7 +140,12 @@ function Dashboard() {
       >
 
         {/* ================= NAVBAR ================= */}
-        <Navbar />
+        <Navbar
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+        />
+
+        
 
         {/* ================================================= */}
         {/* ================= DASHBOARD PAGE ================= */}
@@ -150,6 +176,7 @@ function Dashboard() {
                 <Card
                   title="pH"
                   value={data.ph}
+                  darkMode={darkMode}
                 />
               </div>
 
@@ -164,6 +191,7 @@ function Dashboard() {
                   title="Turbidity"
                   value={data.turbidity}
                   unit="NTU"
+                  darkMode={darkMode}
                 />
               </div>
 
@@ -178,6 +206,7 @@ function Dashboard() {
                   title="Temperature"
                   value={data.temperature}
                   unit="°C"
+                  darkMode={darkMode}
                 />
               </div>
 
@@ -192,6 +221,7 @@ function Dashboard() {
                   title="TDS"
                   value={data.tds}
                   unit="ppm"
+                  darkMode={darkMode}
                 />
               </div>
 
@@ -212,11 +242,12 @@ function Dashboard() {
 
               <div
                 style={{
-                  background: "#0f172a",
+                  background: cardBackground,
                   borderRadius: "20px",
                   padding: "20px",
-                  border: "1px solid #1e293b",
-                  boxShadow: "0 0 20px rgba(56,189,248,0.08)"
+                  border: borderColor,
+                  boxShadow: "0 0 20px rgba(56,189,248,0.08)",
+                  transition: "0.3s"
                 }}
               >
                 <WaterChart history={history} />
@@ -226,14 +257,15 @@ function Dashboard() {
 
               <div
                 style={{
-                  background: "#0f172a",
+                  background: cardBackground,
                   borderRadius: "20px",
                   padding: "20px",
-                  border: "1px solid #1e293b",
-                  boxShadow: "0 0 20px rgba(255,0,0,0.08)"
+                  border: borderColor,
+                  boxShadow: "0 0 20px rgba(255,0,0,0.08)",
+                  transition: "0.3s"
                 }}
               >
-                <Alerts data={data} />
+                <Alerts data={data} darkMode={darkMode} />
               </div>
 
             </div>
@@ -251,7 +283,7 @@ function Dashboard() {
 
             <h1
               style={{
-                color: "#38bdf8",
+                color: titleColor,
                 marginBottom: "20px"
               }}
             >
@@ -267,65 +299,59 @@ function Dashboard() {
             >
 
               {/* pH */}
-              <div style={boxStyle}>
-                <h2 style={titleStyle}>pH Level</h2>
+              <div style={boxStyle(darkMode)}>
+                <h2 style={titleStyle(darkMode)}>pH Level</h2>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   Current Value: {data.ph}
                 </p>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   Safe Range: 6.5 - 8.5
                 </p>
-                <p style={textStyle}>
-                  💧 pH level in water is a measurement that shows how acidic or alkaline the water is, using a scale from 0 to 14 where 7 is neutral (pure water), values below 7 are acidic, and values above 7 are alkaline; for safe drinking water, the ideal pH range is 6.5 to 8.5 because water within this range is generally safe for health, while water below 6.5 may be too acidic and cause pipe corrosion and possible health issues, and water above 8.5 may be too alkaline affecting taste and causing mineral buildup, making pH an important factor in monitoring water quality, ensuring safety, and protecting both human health and water systems.</p>
+
               </div>
 
               {/* Turbidity */}
-              <div style={boxStyle}>
-                <h2 style={titleStyle}>Turbidity</h2>
+              <div style={boxStyle(darkMode)}>
+                <h2 style={titleStyle(darkMode)}>Turbidity</h2>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   Current Value: {data.turbidity} NTU
                 </p>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   High turbidity means dirty water.
                 </p>
-                <p style={textStyle}>
-                  💧Ideal Turbidity Level for Human Use is generally below 1 NTU (Nephelometric Turbidity Unit) for drinking water, as this indicates very clear water that is safe, clean, and suitable for human consumption; water with low turbidity means it contains very few suspended particles and is less likely to carry harmful microorganisms, while turbidity above 5 NTU is usually considered unsafe or poor quality because it can reduce disinfection effectiveness, affect taste and appearance, and indicate possible contamination, so maintaining low turbidity is essential for ensuring safe, healthy, and good-quality drinking water for humans.
-                </p>
+
               </div>
 
               {/* Temperature */}
-              <div style={boxStyle}>
-                <h2 style={titleStyle}>Temperature</h2>
+              <div style={boxStyle(darkMode)}>
+                <h2 style={titleStyle(darkMode)}>Temperature</h2>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   Current Value: {data.temperature} °C
                 </p>
-                <p style={textStyle}>
+
+                <p style={textStyle(darkMode)}>
                   Safe Temperature range : 10°C - 20°C
                 </p>
-                <p style={textStyle}>
-                  🌡️Ideal Water Temperature for Human Use is generally between 10°C and 20°C, as this range is considered most suitable for drinking and daily use because it provides a refreshing taste, is comfortable for the human body, and does not promote rapid bacterial growth; water that is too hot may be unsafe or unpleasant to drink, while very cold water can cause discomfort for some people, so maintaining a moderate temperature ensures better hydration, improved safety, and overall healthier water consumption for humans.
-                </p>
+
               </div>
 
               {/* TDS */}
-              <div style={boxStyle}>
-                <h2 style={titleStyle}>TDS</h2>
+              <div style={boxStyle(darkMode)}>
+                <h2 style={titleStyle(darkMode)}>TDS</h2>
 
-                <p style={textStyle}>
+                <p style={textStyle(darkMode)}>
                   Current Value: {data.tds} ppm
                 </p>
-                <p style={textStyle}>
+
+                <p style={textStyle(darkMode)}>
                   Safe TDS range: 300ppm - 600ppm
                 </p>
-                <p style={textStyle}>
-                  💧Total Dissolved Solids (TDS) in water refers to the total amount of dissolved substances such as minerals, salts, and organic matter present in water, and it is an important indicator of water quality because it directly affects taste and safety; for human consumption, the ideal TDS level is generally below 300 mg/L (excellent) to 300–600 mg/L (good), while up to 900 mg/L is still acceptable in some cases, but higher levels may make the water taste salty or bitter and could indicate poor quality or contamination, so monitoring TDS helps ensure the water is healthy, safe, and suitable for drinking and daily human use.
-                </p>
-                
+
               </div>
 
             </div>
@@ -353,10 +379,10 @@ function Dashboard() {
 
             <div
               style={{
-                background: "#0f172a",
+                background: cardBackground,
                 padding: "25px",
                 borderRadius: "20px",
-                border: "1px solid #7f1d1d"
+                border: borderColor
               }}
             >
               <Alerts data={data} />
@@ -376,7 +402,7 @@ function Dashboard() {
 
             <h1
               style={{
-                color: "#38bdf8",
+                color: titleColor,
                 marginBottom: "20px"
               }}
             >
@@ -385,22 +411,22 @@ function Dashboard() {
 
             <div
               style={{
-                background: "#0f172a",
+                background: cardBackground,
                 padding: "25px",
                 borderRadius: "20px",
-                border: "1px solid #1e293b"
+                border: borderColor
               }}
             >
 
-              <p style={settingText}>
+              <p style={textStyle(darkMode)}>
                 🔧 Device Configuration
               </p>
 
-              <p style={settingText}>
+              <p style={textStyle(darkMode)}>
                 📡 Sensor Calibration
               </p>
 
-              <p style={settingText}>
+              <p style={textStyle(darkMode)}>
                 🔔 Notification Settings
               </p>
 
@@ -421,29 +447,28 @@ function Dashboard() {
 // REUSABLE STYLES
 // ===============================
 
-const boxStyle = {
-  background: "#0f172a",
+const boxStyle = (darkMode) => ({
+  background: darkMode ? "#0f172a" : "#ffffff",
   padding: "25px",
   borderRadius: "20px",
-  border: "1px solid #1e293b",
-  boxShadow: "0 0 20px rgba(56,189,248,0.05)"
-};
+  border: darkMode
+    ? "1px solid #1e293b"
+    : "1px solid #cbd5e1",
 
-const titleStyle = {
-  color: "#38bdf8",
+  boxShadow: darkMode
+    ? "0 0 20px rgba(56,189,248,0.05)"
+    : "0 0 20px rgba(0,0,0,0.05)"
+});
+
+const titleStyle = (darkMode) => ({
+  color: darkMode ? "#38bdf8" : "#0f172a",
   marginBottom: "15px"
-};
+});
 
-const textStyle = {
-  color: "#cbd5e1",
+const textStyle = (darkMode) => ({
+  color: darkMode ? "#cbd5e1" : "#334155",
   marginBottom: "10px",
   fontSize: "15px"
-};
-
-const settingText = {
-  color: "#cbd5e1",
-  marginBottom: "15px",
-  fontSize: "16px"
-};
+});
 
 export default Dashboard;
