@@ -51,7 +51,7 @@ client.on('message', async (topic, message) => {
     };
 
     // Save to Firebase
-    await db.ref('/waterData').push(payload);
+    await db.ref('waterData').push(payload);
 
     if (process.env.NODE_ENV === "development") {
       console.log("📤 Data saved:", payload);
