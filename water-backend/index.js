@@ -1,6 +1,9 @@
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 
+const mqtt = require('mqtt');
+const admin = require('firebase-admin');
+
 // 🔐 Load Firebase key from environment variable
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
