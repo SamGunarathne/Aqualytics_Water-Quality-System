@@ -1,6 +1,32 @@
-function Card({ title, value, unit, darkMode }) {
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip
+} from "chart.js";
 
-  // 🔥 status logic
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip
+);
+
+function Card({
+  title,
+  value,
+  unit,
+  darkMode,
+  history = [],
+  onClick
+}) {
+
+  // ================= STATUS LOGIC =================
   const getStatus = () => {
     if (title === "pH") {
       if (value < 6.5 || value > 8.5) return "danger";
@@ -27,21 +53,48 @@ function Card({ title, value, unit, darkMode }) {
 
   const status = getStatus();
 
-  return (
-    <div
-      style={{
-        ...styles.card,
+  // ================= MINI CHART DATA =================
+  const chartData = {
+    labels: history.map((_, i) => i + 1),
+    datasets: [
+      {
+        data: history,
+        borderColor:
+          status === "safe"
+            ? "#22c55e"
+            : status === "warning"
+            ? "#eab308"
+            : "#ef4444",
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 0
+      }
+    ]
+  };
 
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false }
+    },
+    scales: {
+      x: { display: false },
+      y: { display: false }
+    }
+  };
+
+  return (
+  <div
+    onClick={onClick}
+    style={{
+        ...styles.card,
         background: darkMode
           ? "linear-gradient(145deg, #020617, #0b1224)"
           : "#ffffff",
-
         color: darkMode ? "white" : "#0f172a",
-
-        border: darkMode
-          ? "1px solid #1e293b"
-          : "1px solid #cbd5e1",
-
+        border: darkMode ? "1px solid #1e293b" : "1px solid #cbd5e1",
         boxShadow:
           status === "safe"
             ? darkMode
@@ -55,9 +108,11 @@ function Card({ title, value, unit, darkMode }) {
             ? "0 0 20px rgba(239,68,68,0.25)"
             : "0 0 12px rgba(239,68,68,0.15)"
       }}
+      
+        
     >
 
-      {/* 🔴 STATUS DOT */}
+      {/* STATUS DOT */}
       <div
         style={{
           ...styles.dot,
@@ -67,51 +122,38 @@ function Card({ title, value, unit, darkMode }) {
               : status === "warning"
               ? "#eab308"
               : "#ef4444",
-
           boxShadow:
             status === "safe"
               ? "0 0 10px #22c55e"
               : status === "warning"
               ? "0 0 10px #eab308"
-              : "0 0 10px #ef4444"
+              : "0 0 10px #ef4444"    
         }}
-      ></div>
+      />
 
       {/* TITLE */}
-      <h4
-        style={{
-          ...styles.title,
-          color: darkMode ? "#94a3b8" : "#475569"
-        }}
-      >
+      <h4 style={{ ...styles.title, color: darkMode ? "#94a3b8" : "#475569" }}>
         {title}
       </h4>
 
       {/* VALUE */}
-      <h2
-        style={{
-          ...styles.value,
-          color: darkMode ? "#38bdf8" : "#0284c7"
-        }}
-      >
-        {value}{" "}
-        <span
-          style={{
-            ...styles.unit,
-            color: darkMode ? "#94a3b8" : "#475569"
-          }}
-        >
-          {unit}
-        </span>
+      <h2 style={{ ...styles.value, color: darkMode ? "#38bdf8" : "#0284c7" }}>
+        {value} <span style={styles.unit}>{unit}</span>
       </h2>
 
+      {/* 🔥 MINI CHART */}
+      {history && history.length > 1 ? (
+        <div style={{ height: "60px", width: "100%" }}>
+        <Line data={chartData} options={chartOptions} />
+        </div>
+      ) : (
+        <div style={{ fontSize: "12px", opacity: 0.5 }}>
+          No chart data
+        </div>
+      )}
+
       {/* STATUS TEXT */}
-      <p
-        style={{
-          ...styles.statusText,
-          color: darkMode ? "#cbd5e1" : "#334155"
-        }}
-      >
+      <p style={{ ...styles.statusText, color: darkMode ? "#cbd5e1" : "#334155" }}>
         {status.toUpperCase()}
       </p>
 
@@ -120,11 +162,10 @@ function Card({ title, value, unit, darkMode }) {
 }
 
 const styles = {
-
   card: {
-    padding: "40px",
+    padding: "20px",
     borderRadius: "14px",
-    width: "80%",
+    width: "100%",
     position: "relative",
     overflow: "hidden",
     transition: "0.3s",
@@ -132,13 +173,12 @@ const styles = {
   },
 
   title: {
-    fontSize: "20px",
-    letterSpacing: "1px",
+    fontSize: "16px",
     margin: 0
   },
 
   value: {
-    fontSize: "28px",
+    fontSize: "26px",
     marginTop: "8px",
     marginBottom: "0"
   },
@@ -149,15 +189,14 @@ const styles = {
 
   statusText: {
     fontSize: "11px",
-    marginTop: "10px",
-    opacity: 0.8,
-    letterSpacing: "1px"
+    marginTop: "8px",
+    opacity: 0.8
   },
 
   dot: {
     position: "absolute",
-    top: "12px",
-    right: "12px",
+    top: "10px",
+    right: "10px",
     width: "10px",
     height: "10px",
     borderRadius: "50%"
