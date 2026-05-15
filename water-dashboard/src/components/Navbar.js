@@ -120,7 +120,7 @@ function Navbar({ darkMode, setDarkMode }) {
               color: darkMode ? "white" : "#0f172a"
             }}
           >
-            AQUALYICS
+            AQUALYTICS
           </h1>
 
           <p
