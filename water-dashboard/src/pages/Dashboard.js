@@ -14,6 +14,7 @@ function Dashboard() {
   // PAGE SWITCH
   // ===============================
   const [page, setPage] = useState("dashboard");
+  const [selectedSensor, setSelectedSensor] = useState("");
 
   // ===============================
   // THEME MODE
@@ -58,6 +59,7 @@ function Dashboard() {
       const latest = dataArray[dataArray.length - 1];
 
       console.log("🔥 LIVE UPDATE:", latest);
+      console.log("HISTORY:", history);
 
       setData({
         ph: Number(latest.ph ?? 0),
@@ -115,18 +117,18 @@ function Dashboard() {
 
   return (
 
-    <div
-      style={{
-        display: "flex",
-        background: mainBackground,
-        minHeight: "100vh",
-        transition: "0.3s"
-      }}
-    >
-
+    <div style={{
+      display: "flex",
+      minHeight: "100vh",
+      backgroundImage: "url('/dashboard-bg.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat"
+    }}>
       {/* ================= SIDEBAR ================= */}
       <Sidebar
         setPage={setPage}
+        setSelectedSensor={setSelectedSensor}
         darkMode={darkMode}
       />
 
@@ -177,6 +179,11 @@ function Dashboard() {
                   title="pH"
                   value={data.ph}
                   darkMode={darkMode}
+                  history={history?.map(d => Number(d.ph)).filter(v => !isNaN(v)) || []}
+                  onClick={() => {
+                    setPage("water");
+                    setSelectedSensor("ph");
+                  }}
                 />
               </div>
 
@@ -192,6 +199,11 @@ function Dashboard() {
                   value={data.turbidity}
                   unit="NTU"
                   darkMode={darkMode}
+                  history={history?.map(d => Number(d.turbidity)).filter(v => !isNaN(v)) || []}
+                  onClick={() => {
+                    setPage("water");
+                    setSelectedSensor("turbidity");
+                  }}
                 />
               </div>
 
@@ -207,6 +219,11 @@ function Dashboard() {
                   value={data.temperature}
                   unit="°C"
                   darkMode={darkMode}
+                  history={history?.map(d => Number(d.temperature)).filter(v => !isNaN(v)) || []}
+                  onClick={() => {
+                    setPage("water");
+                    setSelectedSensor("temperature");
+                  }}
                 />
               </div>
 
@@ -222,6 +239,11 @@ function Dashboard() {
                   value={data.tds}
                   unit="ppm"
                   darkMode={darkMode}
+                  history={history?.map(d => Number(d.tds)).filter(v => !isNaN(v)) || []}
+                  onClick={() => {
+                    setPage("water");
+                    setSelectedSensor("tds");
+                  }}
                 />
               </div>
 
@@ -280,6 +302,25 @@ function Dashboard() {
         {page === "water" && (
 
           <div style={{ marginTop: "20px" }}>
+            <button
+              onClick={() => {
+                setPage("dashboard");
+                setSelectedSensor("");
+              }}
+              style={{
+                padding: "10px 16px",
+                marginBottom: "15px",
+                borderRadius: "10px",
+                border: "none",
+                cursor: "pointer",
+                background: darkMode ? "#38bdf8" : "#0284c7",
+                color: "white",
+                fontWeight: "bold",
+                boxShadow: "0 0 10px rgba(56,189,248,0.3)"
+              }}
+            >
+              Back
+            </button>
 
             <h1
               style={{
@@ -299,7 +340,9 @@ function Dashboard() {
             >
 
               {/* pH */}
+              {(selectedSensor === "" || selectedSensor === "ph") && (
               <div style={boxStyle(darkMode)}>
+
                 <h2 style={titleStyle(darkMode)}>pH Level</h2>
 
                 <p style={textStyle(darkMode)}>
@@ -311,9 +354,12 @@ function Dashboard() {
                 </p>
 
               </div>
+            )}
 
               {/* Turbidity */}
+              {(selectedSensor === "" || selectedSensor === "turbidity") && (
               <div style={boxStyle(darkMode)}>
+
                 <h2 style={titleStyle(darkMode)}>Turbidity</h2>
 
                 <p style={textStyle(darkMode)}>
@@ -325,9 +371,12 @@ function Dashboard() {
                 </p>
 
               </div>
+            )}
 
               {/* Temperature */}
+              {(selectedSensor === "" || selectedSensor === "temperature") && (
               <div style={boxStyle(darkMode)}>
+
                 <h2 style={titleStyle(darkMode)}>Temperature</h2>
 
                 <p style={textStyle(darkMode)}>
@@ -339,9 +388,12 @@ function Dashboard() {
                 </p>
 
               </div>
+            )}
 
               {/* TDS */}
+              {(selectedSensor === "" || selectedSensor === "tds") && (
               <div style={boxStyle(darkMode)}>
+
                 <h2 style={titleStyle(darkMode)}>TDS</h2>
 
                 <p style={textStyle(darkMode)}>
@@ -353,6 +405,8 @@ function Dashboard() {
                 </p>
 
               </div>
+            )}
+            
 
             </div>
 
@@ -435,6 +489,7 @@ function Dashboard() {
           </div>
 
         )}
+        
 
       </div>
 
