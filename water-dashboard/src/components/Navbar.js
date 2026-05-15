@@ -79,27 +79,36 @@ function Navbar({ darkMode, setDarkMode }) {
           gap: "16px"
         }}
       >
-
         {/* LOGO */}
-        <div
+      <div
+        style={{
+          width: "60px",
+          height: "60px",
+          borderRadius: "18px",
+
+          overflow: "hidden",
+
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+
+          background: "transparent",
+
+
+        }}
+      >
+
+        <img
+          src="/logo.png"
+          alt="Logo"
           style={{
-            width: "55px",
-            height: "55px",
-            borderRadius: "18px",
-            background:
-              "linear-gradient(135deg,#0ea5e9,#06b6d4)",
-
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-
-            boxShadow:
-              "0 0 20px rgba(14,165,233,0.4)"
+            width: "120%",
+            height: "120%",
+            objectFit: "contain"
           }}
-        >
-          <Droplets color="white" size={28} />
-        </div>
+        />
 
+      </div>
         {/* TITLE */}
         <div>
 
@@ -175,6 +184,56 @@ function Navbar({ darkMode, setDarkMode }) {
           />
 
         </div>
+        {/* LIVE STATUS */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+
+            padding: "10px 18px",
+            borderRadius: "14px",
+
+            background: darkMode
+            ? "rgba(34,197,94,0.15)"
+            : "rgba(34,197,94,0.12)",
+
+            border: "1px solid rgba(34,197,94,0.25)",
+
+            backdropFilter: "blur(10px)",
+
+            boxShadow:
+              "0 0 15px rgba(34,197,94,0.15)"
+        }}
+>
+
+        {/* GREEN PULSE DOT */}
+        <div
+          style={{
+            width: "10px",
+            height: "10px",
+            borderRadius: "50%",
+            background: "#22c55e",
+
+            boxShadow:
+              "0 0 10px rgba(34,197,94,0.8)",
+
+            animation: "pulse 1.5s infinite"
+          }}
+        ></div>
+
+  <span
+    style={{
+      color: darkMode ? "#bbf7d0" : "#166534",
+      fontWeight: "700",
+      fontSize: "13px",
+      letterSpacing: "1px"
+    }}
+  >
+    LIVE
+  </span>
+
+</div>
 
         {/* NOTIFICATION */}
         <div
@@ -260,12 +319,12 @@ function Navbar({ darkMode, setDarkMode }) {
         >
 
           <img
-            src="https://i.pravatar.cc/100"
+            src="/profile.png"
             alt="admin"
             style={{
               width: "45px",
               height: "45px",
-              borderRadius: "14px",
+              borderRadius: "100px",
               objectFit: "cover"
             }}
           />
