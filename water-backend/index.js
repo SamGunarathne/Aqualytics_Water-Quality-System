@@ -12,7 +12,7 @@ admin.initializeApp({
 const db = admin.database();
 
 // 🌐 Connect MQTT
-const client = mqtt.connect('mqtt://broker.hivemq.com');
+const client = mqtt.connect('mqtt://broker.emqx.io');
 
 client.on('connect', () => {
   console.log("✅ MQTT Connected");
