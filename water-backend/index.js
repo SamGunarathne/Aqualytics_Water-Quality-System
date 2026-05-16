@@ -52,9 +52,9 @@ client.on('message', async (topic, message) => {
     await db.ref('/waterData').push(payload);
 
     if (process.env.NODE_ENV === "development") {
-      console.log("📤 Data saved:", payload);
+      console.log("📤 Data saved Firebase:", payload);
     } else {
-      console.log("📤 Data saved");
+      console.log("📤 Data saved Firebase");
     }
 
   } catch (error) {
@@ -72,3 +72,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
 });
+
+
