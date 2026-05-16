@@ -19,7 +19,7 @@ admin.initializeApp({
 const db = admin.database();
 
 // MQTT setup
-const client = mqtt.connect('mqtt://broker.emqx.io');
+const client = mqtt.connect('mqtt://public-mqtt-broker.bevywise.com');
 
 client.on('connect', () => {
   console.log('✅ MQTT Connected');
