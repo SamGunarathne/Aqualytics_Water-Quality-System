@@ -1,7 +1,12 @@
+const express = require('express');
+const app = express();
+
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 
-// 🔐 Load Firebase key from environment variable
+const PORT = process.env.PORT || 3000;
+
+// Firebase setup
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
 admin.initializeApp({
@@ -11,18 +16,30 @@ admin.initializeApp({
 
 const db = admin.database();
 
-// 🌐 Connect MQTT
+// MQTT setup
 const client = mqtt.connect('mqtt://broker.hivemq.com');
 
 client.on('connect', () => {
-  console.log("✅ MQTT Connected");
-  client.subscribe('water/quality');
+  console.log('✅ MQTT Connected');
+
+  client.subscribe('water/quality', (err) => {
+    if (err) {
+      console.log('❌ MQTT Subscribe Error:', err);
+    } else {
+      console.log('📡 Subscribed to water/quality');
+    }
+  });
 });
 
-client.on('message', (topic, message) => {
+client.on('message', async (topic, message) => {
   try {
+
+    console.log("📥 Raw MQTT Message:", message.toString());
+
+    // Parse incoming JSON
     const data = JSON.parse(message.toString());
 
+    // Keep ORIGINAL payload structure
     const payload = {
       ph: data.ph,
       temperature: data.temperature,
@@ -31,7 +48,8 @@ client.on('message', (topic, message) => {
       timestamp: Date.now()
     };
 
-    db.ref('waterData').push(payload);
+    // Save to Firebase
+    await db.ref('/waterData').push(payload);
 
     if (process.env.NODE_ENV === "development") {
       console.log("📤 Data saved:", payload);
@@ -39,7 +57,18 @@ client.on('message', (topic, message) => {
       console.log("📤 Data saved");
     }
 
-  } catch (err) {
-    console.error("❌ Error:", err.message);
+  } catch (error) {
+    console.log("❌ Error processing MQTT message:", error);
   }
+});
+
+// Express route
+app.get('/', (req, res) => {
+  res.send('Aqualytics MQTT Service Running');
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+
 });
