@@ -1,17 +1,11 @@
 // ==========================================
-// AQUALYTICS BACKEND SERVICE
+// AQUALYTICS MQTT BACKGROUND WORKER
 // EMQX CLOUD + FIREBASE + LOCAL BUFFERING
-// Render Timeout Issue Resolved PORT 3000
 // ==========================================
-
-const express = require('express');
-const app = express();
 
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 const fs = require('fs-extra');
-
-const PORT = process.env.PORT || 3000;
 
 // ==========================================
 // FIREBASE SETUP
@@ -39,7 +33,7 @@ if (!fs.existsSync(BUFFER_FILE)) {
 }
 
 // ==========================================
-// MQTT SETUP (EMQX CLOUD TLS)
+// MQTT CLIENT SETUP
 // ==========================================
 
 const client = mqtt.connect(
@@ -85,14 +79,13 @@ async function bufferLocally(payload) {
     buffer.push(payload);
     await fs.writeJson(BUFFER_FILE, buffer);
     console.log('📁 Data buffered locally');
-
   } catch (err) {
     console.log('❌ Buffer Write Error:', err);
   }
 }
 
 // ==========================================
-// FLUSH BUFFERED DATA
+// REPLAY BUFFERED DATA
 // ==========================================
 
 async function flushBufferedData() {
@@ -106,6 +99,7 @@ async function flushBufferedData() {
     }
 
     console.log(`🔄 Replaying ${buffer.length} buffered messages`);
+
     let remaining = [];
 
     for (const payload of buffer) {
@@ -113,6 +107,7 @@ async function flushBufferedData() {
       try {
         await uploadToFirebase(payload);
         console.log('✅ Recovered buffered message');
+
       } catch (err) {
         console.log('❌ Replay failed');
         remaining.push(payload);
@@ -120,6 +115,7 @@ async function flushBufferedData() {
     }
 
     await fs.writeJson(BUFFER_FILE, remaining);
+
     console.log('🧹 Buffer sync completed');
   } catch (err) {
     console.log('❌ Buffer Flush Error:', err);
@@ -127,21 +123,22 @@ async function flushBufferedData() {
 }
 
 // ==========================================
-// MQTT EVENTS
+// MQTT CONNECT EVENT
 // ==========================================
 
 client.on('connect', async () => {
 
   console.log('✅ MQTT Connected');
 
-  // Flush old buffered data
+  // Replay local buffered data
   await flushBufferedData();
 
-  // Subscribe
+  // Subscribe with QoS1
   client.subscribe(
     'water/quality',
     { qos: 1 },
     (err) => {
+
       if (err) {
         console.log('❌ MQTT Subscribe Error:', err);
       } else {
@@ -152,15 +149,17 @@ client.on('connect', async () => {
 });
 
 // ==========================================
-// MQTT RECONNECT EVENTS
+// MQTT STATUS EVENTS
 // ==========================================
 
 client.on('reconnect', () => {
   console.log('🔄 MQTT Reconnecting...');
 });
+
 client.on('offline', () => {
   console.log('⚠ MQTT Offline');
 });
+
 client.on('error', (err) => {
   console.log('❌ MQTT Error:', err);
 });
@@ -172,9 +171,10 @@ client.on('error', (err) => {
 client.on('message', async (topic, message) => {
 
   try {
+
     console.log('📥 Raw MQTT Message:', message.toString());
 
-    // Parse incoming JSON
+    // Parse MQTT JSON
     const data = JSON.parse(message.toString());
 
     // Create payload
@@ -194,11 +194,7 @@ client.on('message', async (topic, message) => {
 
       await uploadToFirebase(payload);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📤 Data saved:', payload);
-      } else {
-        console.log('📤 Data saved');
-      }
+      console.log('📤 Data saved');
 
     } catch (firebaseError) {
 
@@ -215,35 +211,11 @@ client.on('message', async (topic, message) => {
 });
 
 // ==========================================
-// EXPRESS HEALTH ROUTE
+// KEEP WORKER ALIVE LOG
 // ==========================================
 
-app.get('/', (req, res) => {
+setInterval(() => {
 
-  res.send('Aqualytics MQTT Service Running');
-});
+  console.log('🟢 Worker Alive:', new Date().toISOString());
 
-// ==========================================
-// HEALTH CHECK ROUTE
-// ==========================================
-
-app.get('/health', (req, res) => {
-
-  res.status(200).json({
-
-    status: 'OK',
-
-    mqtt: client.connected ? 'connected' : 'disconnected',
-
-    timestamp: new Date()
-  });
-});
-
-// ==========================================
-// START EXPRESS SERVER
-// ==========================================
-
-app.listen(PORT, () => {
-
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+}, 60000);
