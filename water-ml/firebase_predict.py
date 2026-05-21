@@ -23,7 +23,7 @@ if not firebase_admin._apps:
 model = pickle.load(open("model.pkl", "rb"))
 
 # Connect ONLY to waterData
-ref = db.reference("waterData")
+water_data_ref = db.reference("waterData")
 
 # Track last processed timestamp
 last_timestamp = None
@@ -40,7 +40,7 @@ while True:
 
     try:
 
-        data = ref.get()
+        data = water_data_ref.order_by_child("timestamp").limit_to_last(1).get()
 
         # Check if water data exists
         if not data:
@@ -51,11 +51,7 @@ while True:
         water_data = data
 
         # Get latest reading safely
-        latest_key = max(
-            water_data.keys(),
-            key=lambda k: water_data[k].get("timestamp", 0)
-        )
-
+        latest_key = list(water_data.keys())[0]
         latest_data = water_data[latest_key]
 
         # Required fields check
