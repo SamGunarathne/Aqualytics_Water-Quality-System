@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { db } from "../firebase";
-
-import {
-  ref,
-  query,
-  limitToLast,
-  onValue
-} from "firebase/database";
+import { ref, onValue, query, limitToLast } from "firebase/database";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -42,36 +35,33 @@ function Dashboard() {
   // =========================================
   const [history, setHistory] = useState([]);
 
-  // =========================================
-  // FIREBASE REALTIME LISTENER
-  // =========================================
+  // ===============================
+  // FIREBASE LIVE DATA (OPTIMIZED)
+  // ===============================
   useEffect(() => {
+    // 1. Point to the node, but construct a query restricted to the last 10 entries
+    const waterRef = ref(db, "waterData");
+    const recentWaterQuery = query(waterRef, limitToLast(10));
 
-    // ✅ ONLY GET LAST 10 RECORDS
-    const waterRef = query(
-      ref(db, "waterData"),
-      limitToLast(10)
-    );
-
-    // ✅ REALTIME LISTENER
-    const unsubscribe = onValue(waterRef, (snapshot) => {
-
+    // 2. Attach the listener to the limited query instead of the whole node
+    const unsubscribe = onValue(recentWaterQuery, (snapshot) => {
       const val = snapshot.val();
 
       if (!val) {
-        console.log("⚠ No Firebase Data");
+        console.log("⚠️ No Firebase Data");
         return;
       }
 
-      // ✅ CONVERT OBJECT → ARRAY
-      const dataArray = Object.values(val);
+      // 3. Map keys to objects so we can preserve timestamps or IDs cleanly
+      const dataArray = Object.keys(val).map((key) => ({
+        id: key,
+        ...val[key]
+      }));
 
-      // ✅ GET LATEST DATA
+      // 4. Extract the absolute last element for the overview cards
       const latest = dataArray[dataArray.length - 1];
+      console.log("🔥 OPTIMIZED LIVE UPDATE:", latest);
 
-      // =========================================
-      // UPDATE LIVE SENSOR DATA
-      // =========================================
       setData({
         ph: Number(latest.ph ?? 0),
         turbidity: Number(latest.turbidity ?? 0),
@@ -79,26 +69,19 @@ function Dashboard() {
         tds: Number(latest.tds ?? 0)
       });
 
-      // =========================================
-      // UPDATE HISTORY
-      // =========================================
-      const formattedHistory = dataArray.map((item, index) => ({
-        id: index,
-        time: new Date().toLocaleTimeString(),
-
-        ph: Number(item.ph ?? 0),
-        turbidity: Number(item.turbidity ?? 0),
-        temperature: Number(item.temperature ?? 0),
-        tds: Number(item.tds ?? 0)
+      // 5. Instantly build your history array directly from the network snapshot
+      const formattedHistory = dataArray.map((entry) => ({
+        time: entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
+        ph: Number(entry.ph ?? 0),
+        turbidity: Number(entry.turbidity ?? 0),
+        temperature: Number(entry.temperature ?? 0),
+        tds: Number(entry.tds ?? 0)
       }));
 
       setHistory(formattedHistory);
-
     });
 
-    // ✅ CLEANUP
     return () => unsubscribe();
-
   }, []);
 
   // =========================================
