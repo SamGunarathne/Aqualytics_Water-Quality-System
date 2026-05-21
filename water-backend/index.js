@@ -8,9 +8,7 @@ const admin = require('firebase-admin');
 
 const PORT = process.env.PORT || 3000;
 
-// ==========================================
-// 1. Firebase Admin Initialization
-// ==========================================
+// Firebase setup
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
 admin.initializeApp({
@@ -20,35 +18,7 @@ admin.initializeApp({
 
 const db = admin.database();
 
-// ==========================================
-// 2. Apply Simple Security Rules for Demo
-// ==========================================
-async function applyDatabaseRules() {
-  // Read-only for authenticated users, client-side writes blocked.
-  // The Admin SDK bypasses `.write: false` automatically.
-  const rules = {
-    rules: {
-      "waterData": {
-        ".read": "auth != null",
-        ".write": false
-      }
-    }
-  };
-
-  try {
-    await db.setRules(rules);
-    console.log('🔒 Database security rules applied successfully (Read-Only for clients)');
-  } catch (error) {
-    console.error('❌ Failed to deploy database rules:', error);
-  }
-}
-
-// Automatically deploy rules when backend spins up
-applyDatabaseRules();
-
-// ==========================================
-// 3. MQTT Broker Integration
-// ==========================================
+// MQTT setup
 const client = mqtt.connect('mqtt://public-mqtt-broker.bevywise.com');
 
 client.on('connect', () => {
@@ -65,27 +35,28 @@ client.on('connect', () => {
 
 client.on('message', async (topic, message) => {
   try {
+
     console.log("📥 Raw MQTT Message:", message.toString());
 
-    // Parse incoming JSON string from ESP32
+    // Parse incoming JSON
     const data = JSON.parse(message.toString());
 
-    // Format structure and safely enforce numeric types
+    // Keep ORIGINAL payload structure
     const payload = {
-      ph: Number(data.ph),
-      temperature: Number(data.temperature),
-      tds: Number(data.tds),
-      turbidity: Number(data.turbidity),
-      timestamp: Date.now() // Server-side fallback timestamp
+      ph: data.ph,
+      temperature: data.temperature,
+      tds: data.tds,
+      turbidity: data.turbidity,
+      timestamp: Date.now()
     };
 
-    // Push entry into Firebase 'waterData' node
+    // Save to Firebase
     await db.ref('waterData').push(payload);
 
     if (process.env.NODE_ENV === "development") {
-      console.log("📤 Data saved successfully:", payload);
+      console.log("📤 Data saved:", payload);
     } else {
-      console.log("📤 Data saved successfully");
+      console.log("📤 Data saved");
     }
 
   } catch (error) {
@@ -93,13 +64,12 @@ client.on('message', async (topic, message) => {
   }
 });
 
-// ==========================================
-// 4. Express Server Checkpoint
-// ==========================================
+// Express route
 app.get('/', (req, res) => {
   res.send('Aqualytics MQTT Service Running');
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Backend server actively running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
