@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+
 import { Line } from "react-chartjs-2";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,6 +25,36 @@ ChartJS.register(
 
 function WaterChart({ history }) {
 
+  // =========================================
+  // MOBILE RESPONSIVE HEIGHT
+  // =========================================
+  const [chartHeight, setChartHeight] = useState(350);
+
+  useEffect(() => {
+
+    const handleResize = () => {
+
+      if (window.innerWidth < 768) {
+        setChartHeight(250);
+      } else {
+        setChartHeight(350);
+      }
+
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+
+  }, []);
+
+  // =========================================
+  // CHART DATA
+  // =========================================
   const data = {
     labels: history.map((d) => d.time),
 
@@ -29,48 +62,68 @@ function WaterChart({ history }) {
       {
         label: "pH",
         data: history.map((d) => d.ph),
+
         borderColor: "#38bdf8",
         backgroundColor: "rgba(56,189,248,0.2)",
+
         tension: 0.4,
         pointRadius: 2,
         borderWidth: 2,
+
         yAxisID: "y"
       },
+
       {
         label: "Turbidity",
         data: history.map((d) => d.turbidity),
+
         borderColor: "#f59e0b",
         backgroundColor: "rgba(245,158,11,0.2)",
+
         tension: 0.4,
         pointRadius: 2,
         borderWidth: 2,
+
         yAxisID: "y"
       },
+
       {
-        label: "Temperature (°C)",
+        label: "Temperature",
         data: history.map((d) => d.temperature),
+
         borderColor: "#ef4444",
         backgroundColor: "rgba(239,68,68,0.2)",
+
         tension: 0.4,
         pointRadius: 2,
         borderWidth: 2,
+
         yAxisID: "y1"
       },
+
       {
-        label: "TDS (ppm)",
+        label: "TDS",
         data: history.map((d) => d.tds),
+
         borderColor: "#22c55e",
         backgroundColor: "rgba(34,197,94,0.2)",
+
         tension: 0.4,
         pointRadius: 2,
         borderWidth: 2,
+
         yAxisID: "y1"
       }
     ]
   };
 
+  // =========================================
+  // CHART OPTIONS
+  // =========================================
   const options = {
+
     responsive: true,
+
     maintainAspectRatio: false,
 
     interaction: {
@@ -79,79 +132,118 @@ function WaterChart({ history }) {
     },
 
     animation: {
-      duration: 800,
-      easing: "easeOutQuart"
+      duration: 700
     },
 
     plugins: {
+
       legend: {
         position: "top",
+
         labels: {
           color: "#94a3b8",
-          boxWidth: 12
+
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12
+          }
         }
       },
 
       title: {
         display: true,
+
         text: "SCADA Live Water Monitoring",
+
         color: "#38bdf8",
+
         font: {
-          size: 16
+          size: window.innerWidth < 768 ? 12 : 16
         }
       },
 
       tooltip: {
         backgroundColor: "#020617",
+
         borderColor: "#38bdf8",
         borderWidth: 1,
+
         titleColor: "#38bdf8",
         bodyColor: "#e2e8f0"
       }
+
     },
 
     scales: {
+
       x: {
-        ticks: { color: "#94a3b8" },
+
+        ticks: {
+          color: "#94a3b8",
+
+          maxTicksLimit:
+            window.innerWidth < 768 ? 5 : 10
+        },
+
         grid: {
-          color: "rgba(148,163,184,0.1)"
+          color: "rgba(148,163,184,0.08)"
         }
+
       },
 
       y: {
+
         type: "linear",
         position: "left",
-        ticks: { color: "#38bdf8" },
-        grid: {
-          color: "rgba(56,189,248,0.1)"
-        },
-        title: {
-          display: true,
-          text: "pH / Turbidity",
+
+        ticks: {
           color: "#38bdf8"
+        },
+
+        grid: {
+          color: "rgba(56,189,248,0.08)"
         }
+
       },
 
       y1: {
+
         type: "linear",
         position: "right",
-        ticks: { color: "#22c55e" },
+
+        ticks: {
+          color: "#22c55e"
+        },
+
         grid: {
           drawOnChartArea: false
-        },
-        title: {
-          display: true,
-          text: "Temp / TDS",
-          color: "#22c55e"
         }
+
       }
+
     }
+
   };
 
+  // =========================================
+  // UI
+  // =========================================
   return (
-    <div style={{ height: "300px" }}>
-      <Line data={data} options={options} />
+
+    <div
+      style={{
+        width: "100%",
+        height: `${chartHeight}px`,
+        position: "relative"
+      }}
+    >
+
+      <Line
+        data={data}
+        options={options}
+      />
+
     </div>
+
   );
 }
 
