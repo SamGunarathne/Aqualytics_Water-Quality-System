@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { db } from "../firebase";
-import { ref, onValue } from "firebase/database";
+
+import {
+  ref,
+  query,
+  limitToLast,
+  onValue
+} from "firebase/database";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -10,20 +16,20 @@ import WaterChart from "../components/WaterChart";
 
 function Dashboard() {
 
-  // ===============================
-  // PAGE SWITCH
-  // ===============================
+  // =========================================
+  // PAGE STATES
+  // =========================================
   const [page, setPage] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState("");
 
-  // ===============================
+  // =========================================
   // THEME MODE
-  // ===============================
+  // =========================================
   const [darkMode, setDarkMode] = useState(true);
 
-  // ===============================
+  // =========================================
   // LIVE SENSOR DATA
-  // ===============================
+  // =========================================
   const [data, setData] = useState({
     ph: 0,
     turbidity: 0,
@@ -31,36 +37,41 @@ function Dashboard() {
     tds: 0
   });
 
-  // ===============================
+  // =========================================
   // CHART HISTORY
-  // ===============================
+  // =========================================
   const [history, setHistory] = useState([]);
 
-  const isFirstLoad = useRef(true);
-
-  // ===============================
-  // FIREBASE LIVE DATA
-  // ===============================
+  // =========================================
+  // FIREBASE REALTIME LISTENER
+  // =========================================
   useEffect(() => {
 
-    const waterRef = ref(db, "waterData");
+    // ✅ ONLY GET LAST 10 RECORDS
+    const waterRef = query(
+      ref(db, "waterData"),
+      limitToLast(10)
+    );
 
+    // ✅ REALTIME LISTENER
     const unsubscribe = onValue(waterRef, (snapshot) => {
 
       const val = snapshot.val();
 
       if (!val) {
-        console.log("⚠️ No Firebase Data");
+        console.log("⚠ No Firebase Data");
         return;
       }
 
+      // ✅ CONVERT OBJECT → ARRAY
       const dataArray = Object.values(val);
 
+      // ✅ GET LATEST DATA
       const latest = dataArray[dataArray.length - 1];
 
-      console.log("🔥 LIVE UPDATE:", latest);
-      console.log("HISTORY:", history);
-
+      // =========================================
+      // UPDATE LIVE SENSOR DATA
+      // =========================================
       setData({
         ph: Number(latest.ph ?? 0),
         turbidity: Number(latest.turbidity ?? 0),
@@ -68,71 +79,76 @@ function Dashboard() {
         tds: Number(latest.tds ?? 0)
       });
 
-      if (isFirstLoad.current) {
-        isFirstLoad.current = false;
-        return;
-      }
+      // =========================================
+      // UPDATE HISTORY
+      // =========================================
+      const formattedHistory = dataArray.map((item, index) => ({
+        id: index,
+        time: new Date().toLocaleTimeString(),
 
-      setHistory((prev) => {
+        ph: Number(item.ph ?? 0),
+        turbidity: Number(item.turbidity ?? 0),
+        temperature: Number(item.temperature ?? 0),
+        tds: Number(item.tds ?? 0)
+      }));
 
-        const newPoint = {
-          time: new Date().toLocaleTimeString(),
-          ph: Number(latest.ph ?? 0),
-          turbidity: Number(latest.turbidity ?? 0),
-          temperature: Number(latest.temperature ?? 0),
-          tds: Number(latest.tds ?? 0)
-        };
-
-        const updated = [...prev, newPoint];
-
-        return updated.slice(-10);
-
-      });
+      setHistory(formattedHistory);
 
     });
 
+    // ✅ CLEANUP
     return () => unsubscribe();
 
   }, []);
 
-  // ===============================
-  // DYNAMIC STYLES
-  // ===============================
+  // =========================================
+  // MEMOIZED SENSOR HISTORIES
+  // =========================================
+  const sensorHistory = useMemo(() => ({
+    ph: history.map((d) => d.ph),
+    turbidity: history.map((d) => d.turbidity),
+    temperature: history.map((d) => d.temperature),
+    tds: history.map((d) => d.tds)
+  }), [history]);
 
-  const mainBackground = darkMode ? "#020817" : "#f1f5f9";
-
+  // =========================================
+  // THEME COLORS
+  // =========================================
   const cardBackground = darkMode ? "#0f172a" : "#ffffff";
 
   const borderColor = darkMode
     ? "1px solid #1e293b"
     : "1px solid #cbd5e1";
 
-  const textColor = darkMode ? "#cbd5e1" : "#334155";
+  const titleColor = darkMode
+    ? "#38bdf8"
+    : "#0f172a";
 
-  const titleColor = darkMode ? "#38bdf8" : "#0f172a";
-
-  // ===============================
+  // =========================================
   // MAIN UI
-  // ===============================
-
+  // =========================================
   return (
 
-    <div style={{
-      display: "flex",
-      minHeight: "100vh",
-      backgroundImage: "url('/dashboard-bg.png')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    }}>
-      {/* ================= SIDEBAR ================= */}
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+
+        backgroundImage: "url('/dashboard-bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
+
+      {/* ================================= SIDEBAR */}
       <Sidebar
         setPage={setPage}
         setSelectedSensor={setSelectedSensor}
         darkMode={darkMode}
       />
 
-      {/* ================= MAIN CONTENT ================= */}
+      {/* ================================= MAIN CONTENT */}
       <div
         style={{
           flex: 1,
@@ -141,23 +157,20 @@ function Dashboard() {
         }}
       >
 
-        {/* ================= NAVBAR ================= */}
+        {/* ================================= NAVBAR */}
         <Navbar
           darkMode={darkMode}
           setDarkMode={setDarkMode}
         />
 
-        
-
-        {/* ================================================= */}
-        {/* ================= DASHBOARD PAGE ================= */}
-        {/* ================================================= */}
+        {/* ====================================================== */}
+        {/* ================= DASHBOARD PAGE ===================== */}
+        {/* ====================================================== */}
 
         {page === "dashboard" && (
           <>
 
-            {/* ================= SENSOR CARDS ================= */}
-
+            {/* ================================= SENSOR CARDS */}
             <div
               style={{
                 display: "grid",
@@ -168,89 +181,60 @@ function Dashboard() {
               }}
             >
 
-              {/* CARD 1 */}
-              <div
-                style={{
-                  width: "100%",
-                  minWidth: "0"
+              {/* pH */}
+              <Card
+                title="pH"
+                value={data.ph}
+                darkMode={darkMode}
+                history={sensorHistory.ph}
+                onClick={() => {
+                  setPage("water");
+                  setSelectedSensor("ph");
                 }}
-              >
-                <Card
-                  title="pH"
-                  value={data.ph}
-                  darkMode={darkMode}
-                  history={history?.map(d => Number(d.ph)).filter(v => !isNaN(v)) || []}
-                  onClick={() => {
-                    setPage("water");
-                    setSelectedSensor("ph");
-                  }}
-                />
-              </div>
+              />
 
-              {/* CARD 2 */}
-              <div
-                style={{
-                  width: "100%",
-                  minWidth: "0"
+              {/* Turbidity */}
+              <Card
+                title="Turbidity"
+                value={data.turbidity}
+                unit="NTU"
+                darkMode={darkMode}
+                history={sensorHistory.turbidity}
+                onClick={() => {
+                  setPage("water");
+                  setSelectedSensor("turbidity");
                 }}
-              >
-                <Card
-                  title="Turbidity"
-                  value={data.turbidity}
-                  unit="NTU"
-                  darkMode={darkMode}
-                  history={history?.map(d => Number(d.turbidity)).filter(v => !isNaN(v)) || []}
-                  onClick={() => {
-                    setPage("water");
-                    setSelectedSensor("turbidity");
-                  }}
-                />
-              </div>
+              />
 
-              {/* CARD 3 */}
-              <div
-                style={{
-                  width: "100%",
-                  minWidth: "0"
+              {/* Temperature */}
+              <Card
+                title="Temperature"
+                value={data.temperature}
+                unit="°C"
+                darkMode={darkMode}
+                history={sensorHistory.temperature}
+                onClick={() => {
+                  setPage("water");
+                  setSelectedSensor("temperature");
                 }}
-              >
-                <Card
-                  title="Temperature"
-                  value={data.temperature}
-                  unit="°C"
-                  darkMode={darkMode}
-                  history={history?.map(d => Number(d.temperature)).filter(v => !isNaN(v)) || []}
-                  onClick={() => {
-                    setPage("water");
-                    setSelectedSensor("temperature");
-                  }}
-                />
-              </div>
+              />
 
-              {/* CARD 4 */}
-              <div
-                style={{
-                  width: "100%",
-                  minWidth: "0"
+              {/* TDS */}
+              <Card
+                title="TDS"
+                value={data.tds}
+                unit="ppm"
+                darkMode={darkMode}
+                history={sensorHistory.tds}
+                onClick={() => {
+                  setPage("water");
+                  setSelectedSensor("tds");
                 }}
-              >
-                <Card
-                  title="TDS"
-                  value={data.tds}
-                  unit="ppm"
-                  darkMode={darkMode}
-                  history={history?.map(d => Number(d.tds)).filter(v => !isNaN(v)) || []}
-                  onClick={() => {
-                    setPage("water");
-                    setSelectedSensor("tds");
-                  }}
-                />
-              </div>
+              />
 
             </div>
 
-            {/* ================= CHART + ALERTS ================= */}
-
+            {/* ================================= CHART + ALERTS */}
             <div
               style={{
                 display: "grid",
@@ -260,34 +244,37 @@ function Dashboard() {
               }}
             >
 
-              {/* ================= CHART ================= */}
-
+              {/* ================================= CHART */}
               <div
                 style={{
                   background: cardBackground,
                   borderRadius: "20px",
                   padding: "20px",
                   border: borderColor,
-                  boxShadow: "0 0 20px rgba(56,189,248,0.08)",
-                  transition: "0.3s"
+
+                  boxShadow:
+                    "0 0 20px rgba(56,189,248,0.08)"
                 }}
               >
                 <WaterChart history={history} />
               </div>
 
-              {/* ================= ALERTS ================= */}
-
+              {/* ================================= ALERTS */}
               <div
                 style={{
                   background: cardBackground,
                   borderRadius: "20px",
                   padding: "20px",
                   border: borderColor,
-                  boxShadow: "0 0 20px rgba(255,0,0,0.08)",
-                  transition: "0.3s"
+
+                  boxShadow:
+                    "0 0 20px rgba(255,0,0,0.08)"
                 }}
               >
-                <Alerts data={data} darkMode={darkMode} />
+                <Alerts
+                  data={data}
+                  darkMode={darkMode}
+                />
               </div>
 
             </div>
@@ -295,13 +282,15 @@ function Dashboard() {
           </>
         )}
 
-        {/* ================================================= */}
-        {/* ================= WATER DATA PAGE =============== */}
-        {/* ================================================= */}
+        {/* ====================================================== */}
+        {/* ================= WATER DATA PAGE ==================== */}
+        {/* ====================================================== */}
 
         {page === "water" && (
 
           <div style={{ marginTop: "20px" }}>
+
+            {/* BACK BUTTON */}
             <button
               onClick={() => {
                 setPage("dashboard");
@@ -310,18 +299,22 @@ function Dashboard() {
               style={{
                 padding: "10px 16px",
                 marginBottom: "15px",
+
                 borderRadius: "10px",
                 border: "none",
                 cursor: "pointer",
-                background: darkMode ? "#38bdf8" : "#0284c7",
+
+                background:
+                  darkMode ? "#38bdf8" : "#0284c7",
+
                 color: "white",
-                fontWeight: "bold",
-                boxShadow: "0 0 10px rgba(56,189,248,0.3)"
+                fontWeight: "bold"
               }}
             >
               Back
             </button>
 
+            {/* TITLE */}
             <h1
               style={{
                 color: titleColor,
@@ -331,82 +324,104 @@ function Dashboard() {
               💧 Water Data Information
             </h1>
 
+            {/* SENSOR INFO GRID */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(250px, 1fr))",
+
                 gap: "20px"
               }}
             >
 
               {/* pH */}
-              {(selectedSensor === "" || selectedSensor === "ph") && (
-              <div style={boxStyle(darkMode)}>
+              {(selectedSensor === "" ||
+                selectedSensor === "ph") && (
 
-                <h2 style={titleStyle(darkMode)}>pH Level</h2>
+                <div style={boxStyle(darkMode)}>
 
-                <p style={textStyle(darkMode)}>
-                  Current Value: {data.ph}
-                </p>
+                  <h2 style={titleStyle(darkMode)}>
+                    pH Level
+                  </h2>
 
-                <p style={textStyle(darkMode)}>
-                  Safe Range: 6.5 - 8.5
-                </p>
+                  <p style={textStyle(darkMode)}>
+                    Current Value: {data.ph}
+                  </p>
 
-              </div>
-            )}
+                  <p style={textStyle(darkMode)}>
+                    Safe Range: 6.5 - 8.5
+                  </p>
+
+                </div>
+              )}
 
               {/* Turbidity */}
-              {(selectedSensor === "" || selectedSensor === "turbidity") && (
-              <div style={boxStyle(darkMode)}>
+              {(selectedSensor === "" ||
+                selectedSensor === "turbidity") && (
 
-                <h2 style={titleStyle(darkMode)}>Turbidity</h2>
+                <div style={boxStyle(darkMode)}>
 
-                <p style={textStyle(darkMode)}>
-                  Current Value: {data.turbidity} NTU
-                </p>
+                  <h2 style={titleStyle(darkMode)}>
+                    Turbidity
+                  </h2>
 
-                <p style={textStyle(darkMode)}>
-                  High turbidity means dirty water.
-                </p>
+                  <p style={textStyle(darkMode)}>
+                    Current Value: {data.turbidity} NTU
+                  </p>
 
-              </div>
-            )}
+                  <p style={textStyle(darkMode)}>
+                    High turbidity means dirty water.
+                  </p>
+
+                </div>
+              )}
 
               {/* Temperature */}
-              {(selectedSensor === "" || selectedSensor === "temperature") && (
-              <div style={boxStyle(darkMode)}>
+              {(selectedSensor === "" ||
+                selectedSensor === "temperature") && (
 
-                <h2 style={titleStyle(darkMode)}>Temperature</h2>
+                <div style={boxStyle(darkMode)}>
 
-                <p style={textStyle(darkMode)}>
-                  Current Value: {data.temperature} °C
-                </p>
+                  <h2 style={titleStyle(darkMode)}>
+                    Temperature
+                  </h2>
 
-                <p style={textStyle(darkMode)}>
-                  Safe Temperature range : 10°C - 20°C
-                </p>
+                  <p style={textStyle(darkMode)}>
+                    Current Value:
+                    {" "}
+                    {data.temperature} °C
+                  </p>
 
-              </div>
-            )}
+                  <p style={textStyle(darkMode)}>
+                    Safe Range: 20°C - 30°C
+                  </p>
+
+                </div>
+              )}
 
               {/* TDS */}
-              {(selectedSensor === "" || selectedSensor === "tds") && (
-              <div style={boxStyle(darkMode)}>
+              {(selectedSensor === "" ||
+                selectedSensor === "tds") && (
 
-                <h2 style={titleStyle(darkMode)}>TDS</h2>
+                <div style={boxStyle(darkMode)}>
 
-                <p style={textStyle(darkMode)}>
-                  Current Value: {data.tds} ppm
-                </p>
+                  <h2 style={titleStyle(darkMode)}>
+                    TDS
+                  </h2>
 
-                <p style={textStyle(darkMode)}>
-                  Safe TDS range: 300ppm - 600ppm
-                </p>
+                  <p style={textStyle(darkMode)}>
+                    Current Value:
+                    {" "}
+                    {data.tds} ppm
+                  </p>
 
-              </div>
-            )}
-            
+                  <p style={textStyle(darkMode)}>
+                    Safe Range: 300ppm - 600ppm
+                  </p>
+
+                </div>
+              )}
 
             </div>
 
@@ -414,9 +429,9 @@ function Dashboard() {
 
         )}
 
-        {/* ================================================= */}
-        {/* ================= ALERT PAGE ==================== */}
-        {/* ================================================= */}
+        {/* ====================================================== */}
+        {/* ================= ALERT PAGE ========================= */}
+        {/* ====================================================== */}
 
         {page === "alerts" && (
 
@@ -439,16 +454,19 @@ function Dashboard() {
                 border: borderColor
               }}
             >
-              <Alerts data={data} />
+              <Alerts
+                data={data}
+                darkMode={darkMode}
+              />
             </div>
 
           </div>
 
         )}
 
-        {/* ================================================= */}
-        {/* ================= SETTINGS PAGE ================= */}
-        {/* ================================================= */}
+        {/* ====================================================== */}
+        {/* ================= SETTINGS PAGE ====================== */}
+        {/* ====================================================== */}
 
         {page === "settings" && (
 
@@ -489,23 +507,26 @@ function Dashboard() {
           </div>
 
         )}
-        
 
       </div>
 
     </div>
-
   );
 }
 
-// ===============================
+// ======================================================
 // REUSABLE STYLES
-// ===============================
+// ======================================================
 
 const boxStyle = (darkMode) => ({
-  background: darkMode ? "#0f172a" : "#ffffff",
+  background: darkMode
+    ? "#0f172a"
+    : "#ffffff",
+
   padding: "25px",
+
   borderRadius: "20px",
+
   border: darkMode
     ? "1px solid #1e293b"
     : "1px solid #cbd5e1",
@@ -516,12 +537,18 @@ const boxStyle = (darkMode) => ({
 });
 
 const titleStyle = (darkMode) => ({
-  color: darkMode ? "#38bdf8" : "#0f172a",
+  color: darkMode
+    ? "#38bdf8"
+    : "#0f172a",
+
   marginBottom: "15px"
 });
 
 const textStyle = (darkMode) => ({
-  color: darkMode ? "#cbd5e1" : "#334155",
+  color: darkMode
+    ? "#cbd5e1"
+    : "#334155",
+
   marginBottom: "10px",
   fontSize: "15px"
 });

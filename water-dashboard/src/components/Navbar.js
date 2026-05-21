@@ -150,40 +150,7 @@ function Navbar({ darkMode, setDarkMode }) {
         }}
       >
 
-        {/* SEARCH BAR */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: darkMode
-              ? "#1e293b"
-              : "#f1f5f9",
-
-            padding: "12px 18px",
-            borderRadius: "14px",
-            width: "260px"
-          }}
-        >
-
-          <Search
-            size={18}
-            color={darkMode ? "#94a3b8" : "#475569"}
-          />
-
-          <input
-            type="text"
-            placeholder="Search..."
-            style={{
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              marginLeft: "10px",
-              width: "100%",
-              color: darkMode ? "white" : "#0f172a"
-            }}
-          />
-
-        </div>
+        
         {/* LIVE STATUS */}
         <div
           style={{
