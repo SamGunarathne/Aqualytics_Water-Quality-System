@@ -1,12 +1,21 @@
 import pickle
 import pandas as pd
 
+# Load model
 model = pickle.load(open("model.pkl", "rb"))
 
-# Example input
+# Example sample
 sample = pd.DataFrame([[
-    7.0, 3.0, 300, 28
-]], columns=['ph', 'turbidity', 'tds', 'temperature'])
+    7.0,
+    3.0,
+    300,
+    28
+]], columns=[
+    "ph",
+    "turbidity",
+    "tds",
+    "temperature"
+])
 
 prediction = model.predict(sample)[0]
 
