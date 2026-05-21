@@ -14,6 +14,20 @@ function Dashboard() {
   // =========================================
   const [page, setPage] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState("");
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+
+      const handleResize = () => {
+        setScreenWidth(window.innerWidth);
+      };
+
+      window.addEventListener("resize", handleResize);
+
+      return () =>
+        window.removeEventListener("resize", handleResize);
+
+    }, []);
 
   // =========================================
   // THEME MODE
@@ -136,7 +150,8 @@ function Dashboard() {
         style={{
           flex: 1,
           padding: "20px",
-          overflowX: "hidden"
+          overflowX: "auto",
+          minWidth: 0
         }}
       >
 
@@ -221,7 +236,10 @@ function Dashboard() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "2fr 1fr",
+                gridTemplateColumns:
+                window.innerWidth < 900
+                  ? "1fr"
+                  : "2fr 1fr",
                 gap: "20px",
                 marginTop: "20px"
               }}
@@ -235,8 +253,11 @@ function Dashboard() {
                   padding: "20px",
                   border: borderColor,
 
-                  boxShadow:
-                    "0 0 20px rgba(56,189,248,0.08)"
+                  boxShadow: "0 0 20px rgba(56,189,248,0.08)",
+
+                  width: "94%",
+                  minWidth: 0,
+                  overflow: "hidden"
                 }}
               >
                 <WaterChart history={history} />
