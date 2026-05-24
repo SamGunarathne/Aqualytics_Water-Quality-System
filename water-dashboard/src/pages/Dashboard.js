@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ref, onValue, query, limitToLast } from "firebase/database";
+import { db } from "../firebase";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
