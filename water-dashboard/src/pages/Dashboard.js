@@ -100,12 +100,14 @@ function Dashboard() {
 
         const val = snapshot.val();
 
-        if (!val) return;
+        if (!val) {
+          console.log("Firebase is connected, but the waterData node is empty.");
+          return;
+        }
+        console.log("📥 Raw Data from Firebase:", val);
 
         const dataArray = Object.values(val);
-
-        const latest =
-          dataArray[dataArray.length - 1];
+        const latest = dataArray[dataArray.length - 1];
 
         const current = {
           ph: Number(latest.ph ?? 0),
@@ -113,6 +115,8 @@ function Dashboard() {
           temperature: Number(latest.temperature ?? 0),
           tds: Number(latest.tds ?? 0)
         };
+
+        console.log("💧 Formatted Current Sensor Data:", current);
 
         // LIVE SENSOR VALUES
         setData(current);
@@ -142,7 +146,10 @@ function Dashboard() {
 
         const val = snapshot.val();
 
-        if (!val) return;
+        if (!val){
+          console.log("Firebase is connected, but the predictionData node is empty.");
+          return;
+        }
 
         // Extract the single newest prediction from the query object
         const dataArray = Object.values(val);
