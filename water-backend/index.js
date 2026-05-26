@@ -43,7 +43,7 @@ if (!fs.existsSync(BUFFER_FILE)) {
 // ==========================================
 
 const client = mqtt.connect(
-  'mqtt://public-mqtt-broker.bevywise.com',
+  'broker.hivemq.com:1883',
   {
 
     //username: process.env.MQTT_USERNAME,
