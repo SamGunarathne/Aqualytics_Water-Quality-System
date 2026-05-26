@@ -50,12 +50,10 @@ const client = mqtt.connect(
 
     //password: process.env.MQTT_PASSWORD,
 
-    clientId: 'mqtt-explorer-1faf5a14',
+    clientId: 'aqualytics-backend-' + Math.random().toString(16).substr(2, 8),
 
     clean: false,
-
     reconnectPeriod: 5000,
-
     rejectUnauthorized: false
   }
 );
