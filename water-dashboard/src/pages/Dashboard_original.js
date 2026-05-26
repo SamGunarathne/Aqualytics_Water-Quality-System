@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../firebase";
 
-import {
-  ref,
-  query,
-  limitToLast,
-  onValue
-} from "firebase/database";
+import {ref,query,limitToLast,onValue} from "firebase/database";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -86,16 +81,10 @@ function Dashboard() {
     );
 
     // ================= PREDICTION DATA =================
-    const predictionRef = query(
-      ref(db, "predictionData"),
-      limitToLast(1)
-    );
+    const predictionRef = ref(db, "predictionData");
 
     // ================= ANOMALY DATA =================
-    const anomalyRef = query(
-      ref(db, "anomalyData"),
-      limitToLast(10)
-    );
+    const anomalyRef = ref(db, "anomalyData");
 
     // =========================================
     // LIVE WATER DATA
@@ -127,9 +116,17 @@ function Dashboard() {
         const formattedHistory = dataArray.map(
           (item, index) => ({
             id: index,
+
             ph: Number(item.ph ?? 0),
-            turbidity: Number(item.turbidity ?? 0),
-            temperature: Number(item.temperature ?? 0),
+
+            turbidity: Number(
+              item.turbidity ?? 0
+            ),
+
+            temperature: Number(
+              item.temperature ?? 0
+            ),
+
             tds: Number(item.tds ?? 0)
           })
         );
@@ -150,18 +147,22 @@ function Dashboard() {
 
         if (!val) return;
 
-        // Extract the single newest prediction from the query object
-        const dataArray = Object.values(val);
-        const latestPrediction = dataArray[dataArray.length - 1];
+        setPrediction({
+          predictedPH:
+            Number(val.predictedPH ?? 0),
 
-        if (latestPrediction) {
-          setPrediction({
-            predictedPH: Number(latestPrediction.predictedPH ?? 0),
-            predictedTurbidity: Number(latestPrediction.predictedTurbidity ?? 0),
-            predictedTemperature: Number(latestPrediction.predictedTemperature ?? 0),
-            predictedTDS: Number(latestPrediction.predictedTDS ?? 0)
-          });
-        }
+          predictedTurbidity:
+            Number(val.predictedTurbidity ?? 0),
+
+          predictedTemperature:
+            Number(
+              val.predictedTemperature ?? 0
+            ),
+
+          predictedTDS:
+            Number(val.predictedTDS ?? 0)
+        });
+
       }
     );
 
@@ -176,7 +177,8 @@ function Dashboard() {
 
         if (!val) return;
 
-        const anomalyArray = Object.values(val);
+        const anomalyArray =
+          Object.values(val);
 
         setAnomalies(anomalyArray);
 
@@ -216,7 +218,9 @@ function Dashboard() {
     return () => {
 
       unsubscribeWater();
+
       unsubscribePrediction();
+
       unsubscribeAnomaly();
 
     };
