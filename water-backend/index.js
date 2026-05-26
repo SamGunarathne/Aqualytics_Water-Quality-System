@@ -43,14 +43,14 @@ if (!fs.existsSync(BUFFER_FILE)) {
 // ==========================================
 
 const client = mqtt.connect(
-  'mqtts://n4f81861.ala.asia-southeast1.emqxsl.com:8883',
+  'public-mqtt-broker.bevywise.com',
   {
 
-    username: process.env.MQTT_USERNAME,
+    //username: process.env.MQTT_USERNAME,
 
-    password: process.env.MQTT_PASSWORD,
+    //password: process.env.MQTT_PASSWORD,
 
-    clientId: 'backend-water-consumer-001',
+    clientId: 'mqtt-explorer-1faf5a14',
 
     clean: false,
 
@@ -69,11 +69,8 @@ async function uploadToFirebase(payload) {
   try {
 
     await db.ref('waterData').push(payload);
-
     return true;
-
   } catch (err) {
-
     throw err;
   }
 }
@@ -85,17 +82,11 @@ async function uploadToFirebase(payload) {
 async function bufferLocally(payload) {
 
   try {
-
     let buffer = await fs.readJson(BUFFER_FILE);
-
     buffer.push(payload);
-
     await fs.writeJson(BUFFER_FILE, buffer);
-
     console.log('📁 Data buffered locally');
-
   } catch (err) {
-
     console.log('❌ Buffer Write Error:', err);
   }
 }
@@ -107,42 +98,25 @@ async function bufferLocally(payload) {
 async function flushBufferedData() {
 
   try {
-
     let buffer = await fs.readJson(BUFFER_FILE);
-
     if (buffer.length === 0) {
-
       console.log('✅ No buffered data');
-
       return;
     }
-
     console.log(`🔄 Replaying ${buffer.length} buffered messages`);
-
     let remaining = [];
-
     for (const payload of buffer) {
-
       try {
-
         await uploadToFirebase(payload);
-
         console.log('✅ Recovered buffered message');
-
       } catch (err) {
-
         console.log('❌ Replay failed');
-
         remaining.push(payload);
       }
     }
-
     await fs.writeJson(BUFFER_FILE, remaining);
-
     console.log('🧹 Buffer sync completed');
-
   } catch (err) {
-
     console.log('❌ Buffer Flush Error:', err);
   }
 }
