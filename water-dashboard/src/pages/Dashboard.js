@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../firebase";
-import {  ref,  query,  limitToLast,  onValue} from "firebase/database";
+
+import {
+  ref,
+  query,
+  limitToLast,
+  onValue
+} from "firebase/database";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -118,67 +124,10 @@ function Dashboard() {
       limitToLast(10)
     );
 
-<<<<<<< HEAD
     // ✅ REALTIME LISTENER
     const unsubscribe = onValue(waterRef, (snapshot) => {
 
       const val = snapshot.val();
-=======
-    // ================= PREDICTION DATA =================
-    const predictionRef = query(
-      ref(db, "predictionData"),
-      limitToLast(1)
-    );
-
-    // ================= ANOMALY DATA =================
-    const anomalyRef = query(
-      ref(db, "anomalyData"),
-      limitToLast(10)
-    );
-
-    // =========================================
-    // LIVE WATER DATA
-    // =========================================
-    const unsubscribeWater = onValue(
-      waterRef,
-      (snapshot) => {
-
-        const val = snapshot.val();
-
-        if (!val) {
-          console.log("Firebase is connected, but the waterData node is empty.");
-          return;
-        }
-        console.log("📥 Raw Data from Firebase:", val);
-
-        const dataArray = Object.values(val);
-        const latest = dataArray[dataArray.length - 1];
-
-        const current = {
-          ph: Number(latest.ph ?? 0),
-          turbidity: Number(latest.turbidity ?? 0),
-          temperature: Number(latest.temperature ?? 0),
-          tds: Number(latest.tds ?? 0)
-        };
-
-        console.log("💧 Formatted Current Sensor Data:", current);
-
-        // LIVE SENSOR VALUES
-        setData(current);
-
-        // CHART HISTORY
-        const formattedHistory = dataArray.map(
-          (item, index) => ({
-            id: index,
-            ph: Number(item.ph ?? 0),
-            turbidity: Number(item.turbidity ?? 0),
-            temperature: Number(item.temperature ?? 0),
-            tds: Number(item.tds ?? 0)
-          })
-        );
-
-        setHistory(formattedHistory);
->>>>>>> b42953eff7a708a85138ca75ebad3d81929941d1
 
       if (!val) {
         console.log("⚠ No Firebase Data");
@@ -191,7 +140,6 @@ function Dashboard() {
       // ✅ GET LATEST DATA
       const latest = dataArray[dataArray.length - 1];
 
-<<<<<<< HEAD
       // =========================================
       // UPDATE LIVE SENSOR DATA
       // =========================================
@@ -230,83 +178,6 @@ function Dashboard() {
 
     // ✅ CLEANUP
     return () => unsubscribe();
-=======
-        if (!val){
-          console.log("Firebase is connected, but the predictionData node is empty.");
-          return;
-        }
-
-        // Extract the single newest prediction from the query object
-        const dataArray = Object.values(val);
-        const latestPrediction = dataArray[dataArray.length - 1];
-
-        if (latestPrediction) {
-          setPrediction({
-            predictedPH: Number(latestPrediction.predictedPH ?? 0),
-            predictedTurbidity: Number(latestPrediction.predictedTurbidity ?? 0),
-            predictedTemperature: Number(latestPrediction.predictedTemperature ?? 0),
-            predictedTDS: Number(latestPrediction.predictedTDS ?? 0)
-          });
-        }
-      }
-    );
-
-    // =========================================
-    // AI ANOMALY ENGINE
-    // =========================================
-    const unsubscribeAnomaly = onValue(
-      anomalyRef,
-      (snapshot) => {
-
-        const val = snapshot.val();
-
-        if (!val) return;
-
-        const anomalyArray = Object.values(val);
-
-        setAnomalies(anomalyArray);
-
-        const latest =
-          anomalyArray[
-            anomalyArray.length - 1
-          ];
-
-        if (latest) {
-
-          setAiAlert(
-            latest.message || ""
-          );
-
-          // PLAY ALERT SOUND
-          if (
-            latest.severity === "HIGH"
-          ) {
-
-            if (alertSound.current) {
-
-              alertSound.current.currentTime = 0;
-
-              alertSound.current
-                .play()
-                .catch(() => {});
-            }
-          }
-        }
-
-      }
-    );
-
-    // =========================================
-    // CLEANUP
-    // =========================================
-    return () => {
-
-      unsubscribeWater();
-      unsubscribePrediction();
-      unsubscribeAnomaly();
-
-    };
->>>>>>> b42953eff7a708a85138ca75ebad3d81929941d1
 
   }, []);
 
