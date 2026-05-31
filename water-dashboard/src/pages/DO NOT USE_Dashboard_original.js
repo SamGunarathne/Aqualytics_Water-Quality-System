@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../firebase";
-import {  ref,  query,  limitToLast,  onValue} from "firebase/database";
+
+import {ref,query,limitToLast,onValue} from "firebase/database";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -9,55 +10,6 @@ import Alerts from "../components/Alerts";
 import WaterChart from "../components/WaterChart";
 
 function Dashboard() {
-    const calculatePrediction = (history) => {
-    if (history.length < 3) return null;
-
-    const last3 = history.slice(-3);
-
-    const avg = (key) =>
-      last3.reduce((sum, item) => sum + item[key], 0) / 3;
-
-    return {
-      ph: avg("ph"),
-      turbidity: avg("turbidity"),
-      temperature: avg("temperature"),
-      tds: avg("tds")
-    };
-  };
-    const detectAnomalies = (history) => {
-    if (history.length < 5) return [];
-
-    const keys = ["ph", "turbidity", "temperature", "tds"];
-
-    let results = [];
-
-    keys.forEach((key) => {
-      const values = history.map((d) => d[key]);
-
-      const mean =
-        values.reduce((a, b) => a + b, 0) / values.length;
-
-      const std = Math.sqrt(
-        values.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) /
-        values.length
-      );
-
-      const latest = history[history.length - 1];
-
-      const z = Math.abs((latest[key] - mean) / std);
-
-      if (z > 2) {
-        results.push({
-          sensor: key,
-          value: latest[key],
-          severity: z > 3 ? "HIGH" : "MEDIUM",
-          score: z.toFixed(2)
-        });
-      }
-    });
-
-    return results;
-  };
 
   // =========================================
   // PAGE STATES
@@ -65,7 +17,7 @@ function Dashboard() {
   const [page, setPage] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState("");
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
+  
     useEffect(() => {
 
       const handleResize = () => {
@@ -97,44 +49,42 @@ function Dashboard() {
   // =========================================
   // CHART HISTORY
   // =========================================
-  const [history, setHistory] = useState([]);
-  const [prediction, setPrediction] = useState({
-    ph: 0,
-    turbidity: 0,
-    temperature: 0,
-    tds: 0
-  });
+    const [history, setHistory] = useState([]);
 
-  const [anomalies, setAnomalies] = useState([]);
+    const [prediction, setPrediction] = useState({
+      predictedPH: 0,
+      predictedTurbidity: 0,
+      predictedTemperature: 0,
+      predictedTDS: 0
+    });
+
+    const [anomalies, setAnomalies] = useState([]);
+
+    const [aiAlert, setAiAlert] = useState("");
+    const alertSound = useRef(null);
+
+    useEffect(() => {
+
+      alertSound.current = new Audio("/alert.mp3");
+
+    }, []);
 
   // =========================================
   // FIREBASE REALTIME LISTENER
   // =========================================
   useEffect(() => {
 
-    // ✅ ONLY GET LAST 10 RECORDS
+    // ================= WATER DATA =================
     const waterRef = query(
       ref(db, "waterData"),
       limitToLast(10)
     );
 
-<<<<<<< HEAD
-    // ✅ REALTIME LISTENER
-    const unsubscribe = onValue(waterRef, (snapshot) => {
-
-      const val = snapshot.val();
-=======
     // ================= PREDICTION DATA =================
-    const predictionRef = query(
-      ref(db, "predictionData"),
-      limitToLast(1)
-    );
+    const predictionRef = ref(db, "predictionData");
 
     // ================= ANOMALY DATA =================
-    const anomalyRef = query(
-      ref(db, "anomalyData"),
-      limitToLast(10)
-    );
+    const anomalyRef = ref(db, "anomalyData");
 
     // =========================================
     // LIVE WATER DATA
@@ -145,14 +95,12 @@ function Dashboard() {
 
         const val = snapshot.val();
 
-        if (!val) {
-          console.log("Firebase is connected, but the waterData node is empty.");
-          return;
-        }
-        console.log("📥 Raw Data from Firebase:", val);
+        if (!val) return;
 
         const dataArray = Object.values(val);
-        const latest = dataArray[dataArray.length - 1];
+
+        const latest =
+          dataArray[dataArray.length - 1];
 
         const current = {
           ph: Number(latest.ph ?? 0),
@@ -161,8 +109,6 @@ function Dashboard() {
           tds: Number(latest.tds ?? 0)
         };
 
-        console.log("💧 Formatted Current Sensor Data:", current);
-
         // LIVE SENSOR VALUES
         setData(current);
 
@@ -170,84 +116,53 @@ function Dashboard() {
         const formattedHistory = dataArray.map(
           (item, index) => ({
             id: index,
+
             ph: Number(item.ph ?? 0),
-            turbidity: Number(item.turbidity ?? 0),
-            temperature: Number(item.temperature ?? 0),
+
+            turbidity: Number(
+              item.turbidity ?? 0
+            ),
+
+            temperature: Number(
+              item.temperature ?? 0
+            ),
+
             tds: Number(item.tds ?? 0)
           })
         );
 
         setHistory(formattedHistory);
->>>>>>> b42953eff7a708a85138ca75ebad3d81929941d1
 
-      if (!val) {
-        console.log("⚠ No Firebase Data");
-        return;
       }
+    );
 
-      // ✅ CONVERT OBJECT → ARRAY
-      const dataArray = Object.values(val);
+    // =========================================
+    // ML PREDICTION
+    // =========================================
+    const unsubscribePrediction = onValue(
+      predictionRef,
+      (snapshot) => {
 
-      // ✅ GET LATEST DATA
-      const latest = dataArray[dataArray.length - 1];
+        const val = snapshot.val();
 
-<<<<<<< HEAD
-      // =========================================
-      // UPDATE LIVE SENSOR DATA
-      // =========================================
-      setData({
-        ph: Number(latest.ph ?? 0),
-        turbidity: Number(latest.turbidity ?? 0),
-        temperature: Number(latest.temperature ?? 0),
-        tds: Number(latest.tds ?? 0)
-      });
+        if (!val) return;
 
-      // =========================================
-      // UPDATE HISTORY
-      // =========================================
-      const formattedHistory = dataArray.map((item, index) => ({
-        id: index,
-        time: new Date().toLocaleTimeString(),
+        setPrediction({
+          predictedPH:
+            Number(val.predictedPH ?? 0),
 
-        ph: Number(item.ph ?? 0),
-        turbidity: Number(item.turbidity ?? 0),
-        temperature: Number(item.temperature ?? 0),
-        tds: Number(item.tds ?? 0)
-      }));
+          predictedTurbidity:
+            Number(val.predictedTurbidity ?? 0),
 
-      setHistory(formattedHistory);
-      const pred = calculatePrediction(formattedHistory);
-      setPrediction(pred || {
-        ph: 0,
-        turbidity: 0,
-        temperature: 0,
-        tds: 0
-      });
+          predictedTemperature:
+            Number(
+              val.predictedTemperature ?? 0
+            ),
 
-      setAnomalies(detectAnomalies(formattedHistory));
+          predictedTDS:
+            Number(val.predictedTDS ?? 0)
+        });
 
-    });
-
-    // ✅ CLEANUP
-    return () => unsubscribe();
-=======
-        if (!val){
-          console.log("Firebase is connected, but the predictionData node is empty.");
-          return;
-        }
-
-        // Extract the single newest prediction from the query object
-        const dataArray = Object.values(val);
-        const latestPrediction = dataArray[dataArray.length - 1];
-
-        if (latestPrediction) {
-          setPrediction({
-            predictedPH: Number(latestPrediction.predictedPH ?? 0),
-            predictedTurbidity: Number(latestPrediction.predictedTurbidity ?? 0),
-            predictedTemperature: Number(latestPrediction.predictedTemperature ?? 0),
-            predictedTDS: Number(latestPrediction.predictedTDS ?? 0)
-          });
-        }
       }
     );
 
@@ -262,7 +177,8 @@ function Dashboard() {
 
         if (!val) return;
 
-        const anomalyArray = Object.values(val);
+        const anomalyArray =
+          Object.values(val);
 
         setAnomalies(anomalyArray);
 
@@ -302,14 +218,16 @@ function Dashboard() {
     return () => {
 
       unsubscribeWater();
+
       unsubscribePrediction();
+
       unsubscribeAnomaly();
 
     };
->>>>>>> b42953eff7a708a85138ca75ebad3d81929941d1
 
   }, []);
 
+  
   // =========================================
   // MEMOIZED SENSOR HISTORIES
   // =========================================
@@ -337,16 +255,10 @@ function Dashboard() {
   // MAIN UI
   // =========================================
   return (
-
-    <div
-      style={{
+      <div style={{
         display: "flex",
         minHeight: "100vh",
-
-        backgroundImage: "url('/dashboard-bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
+        background: "url('/dashboard-bg.png') center/cover no-repeat"
       }}
     >
 
@@ -372,6 +284,21 @@ function Dashboard() {
           darkMode={darkMode}
           setDarkMode={setDarkMode}
         />
+
+        {/* ================================= AI ALERT */}
+        {aiAlert && (
+          <div style={{
+            background: "rgba(255,0,0,0.15)",
+            border: "1px solid red",
+            color: "red",
+            padding: "15px",
+            borderRadius: "12px",
+            marginTop: "15px",
+            boxShadow: "0 0 20px red"
+          }}>
+            🤖 {aiAlert}
+          </div>
+        )}
 
         {/* ====================================================== */}
         {/* ================= DASHBOARD PAGE ===================== */}
@@ -445,17 +372,172 @@ function Dashboard() {
             </div>
 
             {/* ================================= CHART + ALERTS */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                window.innerWidth < 900
-                  ? "1fr"
-                  : "2fr 1fr",
-                gap: "20px",
-                marginTop: "20px"
-              }}
-            >
+            {/* ================= ML PREDICTION PANEL ================= */}
+
+              <div
+                style={{
+                  marginTop: "20px",
+                  background: darkMode
+                    ? "#0f172a"
+                    : "#ffffff",
+
+                  border: borderColor,
+
+                  borderRadius: "20px",
+
+                  padding: "25px",
+
+                  boxShadow:
+                    "0 0 20px rgba(168,85,247,0.15)"
+                }}
+              >
+
+                <h2
+                  style={{
+                    color: "#a855f7",
+                    marginBottom: "20px"
+                  }}
+                >
+                  🔮 AI ML Forecast
+                </h2>
+
+                <div
+                  style={{
+                    display: "grid",
+
+                    gridTemplateColumns:
+                      screenWidth < 768
+                        ? "1fr"
+                        : "repeat(4, 1fr)",
+
+                    gap: "20px"
+                  }}
+                >
+
+                  <div style={boxStyle(darkMode)}>
+                    <h3 style={titleStyle(darkMode)}>
+                      Predicted pH
+                    </h3>
+
+                    <p style={textStyle(darkMode)}>
+                      {prediction.predictedPH}
+                    </p>
+                  </div>
+
+                  <div style={boxStyle(darkMode)}>
+                    <h3 style={titleStyle(darkMode)}>
+                      Predicted Turbidity
+                    </h3>
+
+                    <p style={textStyle(darkMode)}>
+                      {prediction.predictedTurbidity}
+                    </p>
+                  </div>
+
+                  <div style={boxStyle(darkMode)}>
+                    <h3 style={titleStyle(darkMode)}>
+                      Predicted Temperature
+                    </h3>
+
+                    <p style={textStyle(darkMode)}>
+                      {prediction.predictedTemperature} °C
+                    </p>
+                  </div>
+
+                  <div style={boxStyle(darkMode)}>
+                    <h3 style={titleStyle(darkMode)}>
+                      Predicted TDS
+                    </h3>
+
+                    <p style={textStyle(darkMode)}>
+                      {prediction.predictedTDS} ppm
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* ================= AI ANOMALY PANEL ================= */}
+
+              <div
+                style={{
+                  marginTop: "20px",
+
+                  background:
+                    "rgba(255,0,0,0.08)",
+
+                  border:
+                    "1px solid rgba(255,0,0,0.2)",
+
+                  borderRadius: "20px",
+
+                  padding: "25px"
+                }}
+              >
+
+                <h2
+                  style={{
+                    color: "#ef4444",
+                    marginBottom: "20px"
+                  }}
+                >
+                  🚨 AI Anomaly Engine
+                </h2>
+
+                {anomalies.length === 0 ? (
+
+                  <p style={textStyle(darkMode)}>
+                    No anomalies detected
+                  </p>
+
+                ) : (
+
+                  anomalies.map((item, index) => (
+
+                    <div
+                      key={index}
+
+                      style={{
+                        marginBottom: "15px",
+
+                        padding: "15px",
+
+                        borderRadius: "12px",
+
+                        background:
+                          item.severity === "HIGH"
+                            ? "rgba(255,0,0,0.15)"
+                            : "rgba(255,165,0,0.15)",
+
+                        border:
+                          item.severity === "HIGH"
+                            ? "1px solid red"
+                            : "1px solid orange"
+                      }}
+                    >
+
+                      <h3
+                        style={{
+                          color:
+                            item.severity === "HIGH"
+                              ? "#ef4444"
+                              : "#f59e0b"
+                        }}
+                      >
+                        {item.severity}
+                      </h3>
+
+                      <p style={textStyle(darkMode)}>
+                        {item.message}
+                      </p>
+
+                    </div>
+
+                  ))
+                )}
+
+              </div>
 
               {/* ================================= CHART */}
               <div
@@ -473,91 +555,6 @@ function Dashboard() {
                 }}
               >
                 <WaterChart history={history} />
-              </div>
-              {/* ================================= PREDICTION CARD */}
-              <div style={{
-                marginTop: "20px",
-                padding: "20px",
-                borderRadius: "20px",
-                background: cardBackground,
-                border: borderColor
-              }}>
-                <h2 style={{ color: "#a855f7", marginBottom: "15px" }}>
-                  🔮 Prediction (Next Values)
-                </h2>
-
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    window.innerWidth < 768 ? "1fr" : "repeat(4, 1fr)",
-                  gap: "15px"
-                }}>
-
-                  <div style={boxStyle(darkMode)}>
-                    <h3 style={titleStyle(darkMode)}>pH</h3>
-                    <p style={textStyle(darkMode)}>{prediction.ph.toFixed(2)}</p>
-                  </div>
-
-                  <div style={boxStyle(darkMode)}>
-                    <h3 style={titleStyle(darkMode)}>Turbidity</h3>
-                    <p style={textStyle(darkMode)}>{prediction.turbidity.toFixed(2)}</p>
-                  </div>
-
-                  <div style={boxStyle(darkMode)}>
-                    <h3 style={titleStyle(darkMode)}>Temperature</h3>
-                    <p style={textStyle(darkMode)}>{prediction.temperature.toFixed(2)} °C</p>
-                  </div>
-
-                  <div style={boxStyle(darkMode)}>
-                    <h3 style={titleStyle(darkMode)}>TDS</h3>
-                    <p style={textStyle(darkMode)}>{prediction.tds.toFixed(2)} ppm</p>
-                  </div>
-
-                </div>
-              </div>
-              {/* ================================= ANOMALY CARD */}
-              <div style={{
-                marginTop: "20px",
-                padding: "20px",
-                borderRadius: "20px",
-                background: "rgba(255,0,0,0.08)",
-                border: "1px solid rgba(255,0,0,0.2)"
-              }}>
-                <h2 style={{ color: "#ef4444", marginBottom: "15px" }}>
-                  🚨 Anomaly Detection
-                </h2>
-
-                {anomalies.length === 0 ? (
-                  <p style={textStyle(darkMode)}>No anomalies detected</p>
-                ) : (
-                  anomalies.map((a, i) => (
-                    <div key={i} style={{
-                      padding: "15px",
-                      marginBottom: "10px",
-                      borderRadius: "12px",
-                      background:
-                        a.severity === "HIGH"
-                          ? "rgba(255,0,0,0.15)"
-                          : "rgba(255,165,0,0.15)",
-                      border:
-                        a.severity === "HIGH"
-                          ? "1px solid red"
-                          : "1px solid orange"
-                    }}>
-
-                      <h3 style={{
-                        color: a.severity === "HIGH" ? "red" : "orange"
-                      }}>
-                        {a.sensor.toUpperCase()} - {a.severity}
-                      </h3>
-
-                      <p style={textStyle(darkMode)}>
-                        Value: {a.value} | Score: {a.score}
-                      </p>
-
-                    </div>
-                  ))
-                )}
               </div>
 
               {/* ================================= ALERTS */}
@@ -578,7 +575,7 @@ function Dashboard() {
                 />
               </div>
 
-            </div>
+            
 
           </>
         )}
