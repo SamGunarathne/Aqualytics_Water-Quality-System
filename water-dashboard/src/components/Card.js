@@ -7,6 +7,7 @@ import {
   LineElement,
   Tooltip
 } from "chart.js";
+import { Droplets, Thermometer, Waves, Beaker } from "lucide-react";
 
 
 ChartJS.register(
@@ -51,7 +52,36 @@ function Card({
     return "normal";
   };
 
-  const status = getStatus();
+      const status = getStatus();
+      const getIcon = () => {
+      switch (title) {
+        case "pH":
+          return <Beaker size={24} color="#22c55e" />;
+        case "Turbidity":
+          return <Waves size={24} color="#22c55e" />;
+        case "Temperature":
+          return <Thermometer size={24} color="#22c55e" />;
+        case "TDS":
+          return <Droplets size={24} color="#22c55e" />;
+        default:
+          return <Droplets size={24} color="#22c55e" />;
+      }
+    };
+
+    const getRange = () => {
+      switch (title) {
+        case "pH":
+          return "6.5 - 8.5";
+        case "Turbidity":
+          return "0 - 5";
+        case "Temperature":
+          return "20 - 30°C";
+        case "TDS":
+          return "300 - 600 ppm";
+        default:
+          return "";
+      }
+    };
 
   // ================= MINI CHART DATA =================
   const chartData = {
@@ -112,64 +142,124 @@ function Card({
         
     >
 
-      {/* STATUS DOT */}
+          <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start"
+      }}
+    >
+      {/* Left */}
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            width: "55px",
+            height: "55px",
+            borderRadius: "18px",
+            background: "#dcfce7",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "15px"
+          }}
+        >
+          {getIcon()}
+        </div>
+
+        <h4
+          style={{
+            margin: 0,
+            color: darkMode ? "#cbd5e1" : "#475569"
+          }}
+        >
+          {title}
+        </h4>
+
+        <h2
+          style={{
+            margin: "6px 0",
+            color: "#16a34a",
+            fontSize: "34px"
+          }}
+        >
+          {value}
+          <span
+            style={{
+              fontSize: "16px",
+              marginLeft: "6px"
+            }}
+          >
+            {unit}
+          </span>
+        </h2>
+
+        <p
+          style={{
+            color:
+              status === "safe"
+                ? "#22c55e"
+                : status === "warning"
+                ? "#f59e0b"
+                : "#ef4444",
+            fontWeight: "600",
+            margin: "8px 0"
+          }}
+        >
+          ● {status === "safe"
+            ? "Good"
+            : status === "warning"
+            ? "Warning"
+            : "Danger"}
+        </p>
+
+        <p
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            color: "#64748b"
+          }}
+        >
+          {getRange()}
+        </p>
+
+        <small
+          style={{
+            color: "#64748b"
+          }}
+        >
+          Safe Range
+        </small>
+      </div>
+
+      {/* Right Chart */}
       <div
         style={{
-          ...styles.dot,
-          background:
-            status === "safe"
-              ? "#22c55e"
-              : status === "warning"
-              ? "#eab308"
-              : "#ef4444",
-          boxShadow:
-            status === "safe"
-              ? "0 0 10px #22c55e"
-              : status === "warning"
-              ? "0 0 10px #eab308"
-              : "0 0 10px #ef4444"    
+          width: "110px",
+          height: "70px",
+          marginTop: "20px"
         }}
-      />
-
-      {/* TITLE */}
-      <h4 style={{ ...styles.title, color: darkMode ? "#94a3b8" : "#475569" }}>
-        {title}
-      </h4>
-
-      {/* VALUE */}
-      <h2 style={{ ...styles.value, color: darkMode ? "#38bdf8" : "#0284c7" }}>
-        {value} <span style={styles.unit}>{unit}</span>
-      </h2>
-
-      {/* 🔥 MINI CHART */}
-      {history && history.length > 1 ? (
-        <div style={{ height: "60px", width: "100%" }}>
-        <Line data={chartData} options={chartOptions} />
-        </div>
-      ) : (
-        <div style={{ fontSize: "12px", opacity: 0.5 }}>
-          No chart data
-        </div>
-      )}
-
-      {/* STATUS TEXT */}
-      <p style={{ ...styles.statusText, color: darkMode ? "#cbd5e1" : "#334155" }}>
-        {status.toUpperCase()}
-      </p>
+      >
+        {history.length > 1 && (
+          <Line
+            data={chartData}
+            options={chartOptions}
+          />
+        )}
+      </div>
+    </div>
 
     </div>
   );
 }
 
 const styles = {
-  card: {
-    padding: "20px",
-    borderRadius: "14px",
+    card: {
+    padding: "22px",
+    borderRadius: "22px",
     width: "100%",
-    position: "relative",
-    overflow: "hidden",
+    cursor: "pointer",
     transition: "0.3s",
-    cursor: "pointer"
+    minHeight: "20px"
   },
 
   title: {
