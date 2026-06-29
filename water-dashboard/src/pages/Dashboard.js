@@ -338,7 +338,7 @@ function Dashboard() {
 
                   boxShadow: "0 0 20px rgba(56,189,248,0.08)",
 
-                  width: "94%",
+                  width: "100%",
                   minWidth: 0,
                   overflow: "hidden"
                 }}
