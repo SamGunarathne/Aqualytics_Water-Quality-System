@@ -7,7 +7,12 @@ import {
   Moon
 } from "lucide-react";
 
-function Navbar({ darkMode, setDarkMode }) {
+ function Navbar({
+  darkMode,
+  setDarkMode,
+  setPage,
+  alertCount
+}){
 
   const [dateTime, setDateTime] = useState("");
 
@@ -151,6 +156,7 @@ function Navbar({ darkMode, setDarkMode }) {
       >
 
         
+        
         {/* LIVE STATUS */}
         <div
           style={{
@@ -204,6 +210,7 @@ function Navbar({ darkMode, setDarkMode }) {
 
         {/* NOTIFICATION */}
         <div
+          onClick={() => setPage("alerts")}
           style={{
             width: "48px",
             height: "48px",
@@ -227,18 +234,31 @@ function Navbar({ darkMode, setDarkMode }) {
           />
 
           {/* RED DOT */}
-          <span
-            style={{
-              width: "10px",
-              height: "10px",
-              borderRadius: "50%",
-              background: "#ef4444",
-              position: "absolute",
-              top: "12px",
-              right: "12px"
-            }}
-          ></span>
+          {alertCount > 0 && (
+            <span
+              style={{
+                minWidth: "18px",
+                height: "18px",
+                borderRadius: "50%",
+                background: "#ef4444",
+                color: "white",
 
+                fontSize: "11px",
+                fontWeight: "bold",
+
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+
+                position: "absolute",
+                top: "8px",
+                right: "8px"
+              }}
+            >
+              {alertCount}
+            </span>
+            
+          )}
         </div>
 
         {/* DARK MODE BUTTON */}
