@@ -13,6 +13,7 @@ import Navbar from "../components/Navbar";
 import Card from "../components/Card";
 import Alerts from "../components/Alerts";
 import WaterChart from "../components/WaterChart";
+import Login from "../components/Login";
 
 function Dashboard() {
     const calculatePrediction = (history) => {
@@ -61,9 +62,11 @@ function Dashboard() {
         });
       }
     });
-
+    
     return results;
   };
+  
+
 
   // =========================================
   // PAGE STATES
@@ -99,6 +102,16 @@ function Dashboard() {
     temperature: 0,
     tds: 0
   });
+  const alertCount = useMemo(() => {
+    let count = 0;
+
+    if (data.ph < 6.5 || data.ph > 8.5) count++;
+    if (data.turbidity > 5) count++;
+    if (data.tds > 500) count++;
+    if (data.temperature < 20 || data.temperature > 30) count++;
+
+    return count;
+  }, [data]);
 
   // =========================================
   // CHART HISTORY
@@ -209,17 +222,21 @@ function Dashboard() {
   // =========================================
   return (
 
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
+    
+      <div
+        style={{
+          display: "flex",
+          width: "100vw",
+          minHeight: "100vh",
+          overflowX: "hidden",
+          backgroundImage: "url('/dashboard-bg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
+      
 
-        backgroundImage: "url('/dashboard-bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-    >
 
       {/* ================================= SIDEBAR */}
       <Sidebar
@@ -229,19 +246,21 @@ function Dashboard() {
       />
 
       {/* ================================= MAIN CONTENT */}
-      <div
-        style={{
-          flex: 1,
-          padding: "20px",
-          overflowX: "auto",
-          minWidth: 0
-        }}
-      >
+      <div style={{
+        flex: 1,
+        minWidth: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
+        padding: "20px"
+      }}>
+              
 
         {/* ================================= NAVBAR */}
         <Navbar
           darkMode={darkMode}
           setDarkMode={setDarkMode}
+          setPage={setPage}
+          alertCount={alertCount}
         />
 
         {/* ====================================================== */}
@@ -256,9 +275,9 @@ function Dashboard() {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: "50px",
+                gap: "20px",
                 marginTop: "20px",
-                width: "97%"
+                width: "100%"
               }}
             >
 
@@ -320,11 +339,13 @@ function Dashboard() {
               style={{
                 display: "grid",
                 gridTemplateColumns:
-                window.innerWidth < 900
-                  ? "1fr"
-                  : "2fr 1fr",
+                  screenWidth < 900
+                    ? "1fr"
+                    : "2fr 1fr",
+
                 gap: "20px",
-                marginTop: "20px"
+                marginTop: "20px",
+                alignItems: "start"
               }}
             >
 
@@ -339,6 +360,7 @@ function Dashboard() {
                   boxShadow: "0 0 20px rgba(56,189,248,0.08)",
 
                   width: "100%",
+                  boxSizing: "border-box",
                   minWidth: 0,
                   overflow: "hidden"
                 }}
@@ -360,8 +382,9 @@ function Dashboard() {
                 <div style={{
                   display: "grid",
                   gridTemplateColumns:
-                    window.innerWidth < 768 ? "1fr" : "repeat(4, 1fr)",
-                  gap: "15px"
+                  screenWidth < 768
+                    ? "repeat(2, 1fr)"
+                    : "repeat(4, 1fr)",
                 }}>
 
                   <div style={boxStyle(darkMode)}>
@@ -388,7 +411,8 @@ function Dashboard() {
               </div>
               {/* ================================= ANOMALY CARD */}
               <div style={{
-                marginTop: "20px",
+                height: "100%",
+                boxSizing: "border-box",
                 padding: "20px",
                 borderRadius: "20px",
                 background: "rgba(255,0,0,0.08)",
@@ -525,6 +549,26 @@ function Dashboard() {
                     Safe Range: 6.5 - 8.5
                   </p>
 
+                  <p style={textStyle(darkMode)}>
+                    💧 What is pH Level in Water?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    pH level is a measurement that indicates how acidic or alkaline water is. It is measured on a scale from 0 to 14, where pH 7 represents neutral (pure water), values below 7 indicate acidic water, and values above 7 indicate alkaline or basic water.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🚰 Safe Drinking Water Range
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    For safe drinking purposes, the ideal pH range of water is between 6.5 and 8.5. Water within this range is generally safe for human consumption. If the pH is below 6.5, the water is too acidic and may cause corrosion in pipes and potential health concerns. If the pH is above 8.5, the water becomes too alkaline, which may affect taste and lead to mineral buildup.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🌊 Why pH is Important?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    The pH level is important because it helps determine overall water quality and safety. It ensures that the water is suitable for drinking, prevents damage to pipes and equipment, and helps protect human health by maintaining a balanced and safe water condition.
+                  </p>
+
+
                 </div>
               )}
 
@@ -545,6 +589,26 @@ function Dashboard() {
                   <p style={textStyle(darkMode)}>
                     High turbidity means dirty water.
                   </p>
+
+                  <p style={textStyle(darkMode)}>
+                    💧 What is Turbidity in Water?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    Turbidity refers to the cloudiness or clarity of water caused by suspended particles such as dirt, silt, algae, and organic matter. It is a key indicator of water cleanliness and quality.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🚰 Ideal Turbidity Range
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    For safe drinking water, the ideal turbidity level should be below 1 NTU (Nephelometric Turbidity Unit), indicating excellent water clarity and quality. A turbidity level between 1 and 5 NTU is generally considered acceptable, although the water may appear slightly cloudy. Water with turbidity above 5 NTU is considered poor quality and may be unsafe for drinking, as it can contain suspended particles that reduce water clarity and may carry harmful microorganisms or contaminants.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🌊 Why Turbidity is Important?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                      Turbidity affects how clear and safe water is. High turbidity can hide harmful microorganisms, reduce disinfection effectiveness, and affect taste and appearance, so low turbidity is essential for safe human drinking water.
+                  </p>
+
 
                 </div>
               )}
@@ -568,6 +632,26 @@ function Dashboard() {
                   <p style={textStyle(darkMode)}>
                     Safe Range: 20°C - 30°C
                   </p>
+                  <p style={textStyle(darkMode)}>
+                    🌡️ What is Water Temperature?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    Water temperature refers to how hot or cold water is, and it is an important factor in determining water quality and comfort for human use. It is usually measured in degrees Celsius (°C), where moderate temperatures are considered most suitable for drinking water.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🚰 Ideal Water Temperature Range
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    For human consumption, the ideal water temperature is generally between 10°C and 20°C. Water within this range is refreshing, safe, and comfortable to drink. Very hot water may be unsafe and unpleasant, while very cold water may cause discomfort for some people.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🌊 Why Water Temperature is Important?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    Water temperature affects taste, safety, and usability. It helps ensure comfortable drinking conditions, prevents rapid bacterial growth, and supports overall water quality monitoring for human health.
+                  </p>
+
+
 
                 </div>
               )}
@@ -591,6 +675,25 @@ function Dashboard() {
                   <p style={textStyle(darkMode)}>
                     Safe Range: 300ppm - 600ppm
                   </p>
+                  <p style={textStyle(darkMode)}>
+                    💧 What is TDS (Total Dissolved Solids)?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    TDS refers to the total amount of dissolved substances such as minerals, salts, and organic matter present in water. It is an important indicator of water purity and taste.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🚰 Ideal TDS Range
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    For drinking water, the ideal TDS (Total Dissolved Solids) level is generally categorized as below 300 mg/L for excellent quality water, 300–600 mg/L for good quality, 600–900 mg/L for acceptable quality, and above 900 mg/L is considered poor quality, as higher TDS levels may affect taste, indicate excessive dissolved minerals or possible contamination, and reduce overall water quality and safety for human consumption.
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    🌊 Why TDS is Important?
+                  </p>
+                  <p style={textStyle(darkMode)}>
+                    TDS helps determine water taste and safety. High TDS may indicate contamination or heavy mineral content, while balanced TDS ensures safe, good-tasting, and healthy drinking water.
+                  </p>
+
 
                 </div>
               )}
@@ -608,6 +711,29 @@ function Dashboard() {
         {page === "alerts" && (
 
           <div style={{ marginTop: "20px" }}>
+            {/* BACK BUTTON */}
+            <button
+              onClick={() => {
+                setPage("dashboard");
+                setSelectedSensor("");
+              }}
+              style={{
+                padding: "10px 16px",
+                marginBottom: "15px",
+
+                borderRadius: "10px",
+                border: "none",
+                cursor: "pointer",
+
+                background:
+                  darkMode ? "#38bdf8" : "#0284c7",
+
+                color: "white",
+                fontWeight: "bold"
+              }}
+            >
+              Back
+            </button>
 
             <h1
               style={{
@@ -640,6 +766,7 @@ function Dashboard() {
         {/* ================= SETTINGS PAGE ====================== */}
         {/* ====================================================== */}
 
+        
         
 
       </div>
