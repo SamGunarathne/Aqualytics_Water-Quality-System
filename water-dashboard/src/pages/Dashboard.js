@@ -640,45 +640,7 @@ function Dashboard() {
         {/* ================= SETTINGS PAGE ====================== */}
         {/* ====================================================== */}
 
-        {page === "settings" && (
-
-          <div style={{ marginTop: "20px" }}>
-
-            <h1
-              style={{
-                color: titleColor,
-                marginBottom: "20px"
-              }}
-            >
-              ⚙ System Settings
-            </h1>
-
-            <div
-              style={{
-                background: cardBackground,
-                padding: "25px",
-                borderRadius: "20px",
-                border: borderColor
-              }}
-            >
-
-              <p style={textStyle(darkMode)}>
-                🔧 Device Configuration
-              </p>
-
-              <p style={textStyle(darkMode)}>
-                📡 Sensor Calibration
-              </p>
-
-              <p style={textStyle(darkMode)}>
-                🔔 Notification Settings
-              </p>
-
-            </div>
-
-          </div>
-
-        )}
+        
 
       </div>
 
