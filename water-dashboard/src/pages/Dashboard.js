@@ -368,13 +368,16 @@ function Dashboard() {
                 <WaterChart history={history} />
               </div>
               {/* ================================= PREDICTION CARD */}
-              <div style={{
-                marginTop: "20px",
-                padding: "20px",
-                borderRadius: "20px",
-                background: cardBackground,
-                border: borderColor
-              }}>
+              <div
+                style={{
+                  padding: "20px",
+                  borderRadius: "20px",
+                  background: cardBackground,
+                  border: borderColor,
+                  height: "100%",
+                  boxSizing: "border-box"
+                }}
+              >
                 <h2 style={{ color: "#a855f7", marginBottom: "15px" }}>
                   🔮 Prediction (Next Values)
                 </h2>
