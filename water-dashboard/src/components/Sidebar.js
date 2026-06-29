@@ -14,8 +14,8 @@ function Sidebar({ setPage, setSelectedSensor, darkMode }) {
   const menuItems = [
     { name: "Dashboard", icon: <FaTachometerAlt /> },
     { name: "Water Data", icon: <FaWater /> },
-    { name: "Alerts", icon: <FaBell /> },
-    { name: "Settings", icon: <FaCog /> }
+    { name: "Alerts", icon: <FaBell /> }
+  
   ];
 
   const handleMenuClick = (name) => {
