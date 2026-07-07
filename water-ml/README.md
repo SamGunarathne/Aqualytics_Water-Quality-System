@@ -55,18 +55,16 @@ To continue progress, a synthetic dataset approach was used to understand and te
 
 
 
-## Phase 2 - Real Sensor Data Integration
+## Phase 2 - Real Sensor Data Integration & Dual-Layer Safety
 
-After the IoT module completed Firebase integration, live sensor readings became available.
-
-The ML system was then integrated with Firebase to process real-time sensor data.
+After the IoT module completed Firebase integration, live sensor readings became available. The system was upgraded with deep data sanitization, fault tolerance, and a stateful anomaly tracking layer.
 
 ### Steps Completed
-1. Read sensor data from Firebase
-2. Store sensor history into dataset format
-3. Retrain model using real sensor readings
-4. Generate real-time predictions
-5. Update predictions back to Firebase
+1. Read live sensor data dynamically from Firebase
+2. Parse inputs with strict data type conversion and safety checks
+3. Track rolling states to detect sudden environmental changes
+4. Retrain the model using rule-backed real sensor logs
+5. Run a separate analytical verification to measure model metrics
 
 ### Files Used
 
@@ -74,8 +72,10 @@ The ML system was then integrated with Firebase to process real-time sensor data
 |---|---|
 | `prepare_data.py` | Extracts Firebase sensor data into CSV format |
 | `sensor_data.csv` | Dataset generated from real sensor readings |
-| `Train_new_model.py` | Retrains model using real sensor data |
-| `firebase_predict.py` | Real-time Firebase prediction system |
+| `train_new_model.py`| Retrains model with updated feature synchronization |
+| `evaluate_model.py` | Runs 80/20 train/test evaluation metrics |
+| `firebase_predict.py` | Core engine managing real-time ML + anomaly tracking |
+
 
 
 
@@ -103,38 +103,36 @@ The prediction model analyses the following water quality parameters:
 
 # Prediction Workflow
 
-```text
 Firebase Sensor Data
         ↓
-Python Backend Processing
+Python Backend Processing (Type Checking & State Tracking)
         ↓
-ML Prediction
+Dual-Layer Analytics (ML Classification + Heuristic Anomaly Flags)
         ↓
-Prediction Sent Back to Firebase
+Prediction & Anomaly Data Pushed to Firebase
         ↓
-Frontend Dashboard Display
-```
+Frontend Dashboard Display & Alert UI
+
 
 
 
 # Project Structure
 
-```text
 Aqualytics/
 │
 ├── firebase_predict.py
 ├── generate_data.py
 ├── prepare_data.py
 ├── predict.py
+├── evaluate_model.py
 ├── train_model.py
-├── Train_new_model.py
+├── train_new_modell.py
 ├── water_data.csv
 ├── sensor_data.csv
 ├── model.pkl
 ├── requirements.txt
-├── .gitignore
 └── README.md
-```
+
 
 
 
@@ -195,6 +193,12 @@ python prepare_data.py
 python Train_new_model.py
 ```
 
+## Evaluate Performance Metrics
+
+```bash
+python evaluate_model.py
+```
+
 ## Start Real-Time Prediction System
 
 ```bash
@@ -206,28 +210,18 @@ python firebase_predict.py
 # Current Status
 
 ### Completed
-- Synthetic ML workflow
-- Firebase integration
-- Real-time prediction pipeline
-- Model retraining workflow
-- Backend prediction automation
-
-### Currently Improving
-- Prediction accuracy
-- Real sensor dataset collection
-- Model optimisation
-- System reliability
+- Synthetic ML workflow prototyping
+- Live Firebase integration and telemetry stream ingestion
+- Input validation, type checking, and fallback crash handler routing
+- Dual-layer safety: Scikit-learn Decision Tree classification paired with heuristic checks
+- Real-time anomaly alerts (Sudden spikes, threshold caps, specific event reason tracking)
+- Model validation tracking script setup
 
 
+# Future Scope / Long-Term Development
 
-# Future Improvements
-
-- Advanced ML algorithms
-- TinyML deployment
-- Real-time alerts
-- Prediction confidence analysis
-- Historical data analytics
-- Improved classification accuracy
+- Expanding the rules baseline into human-labeled feedback streams
+- Tuning hyperparameters for advanced forest classifiers
 
 
 

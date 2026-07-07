@@ -1,5 +1,3 @@
-# firebase_predict.py
-
 import firebase_admin
 from firebase_admin import credentials, db
 import pickle
@@ -10,51 +8,91 @@ import pandas as pd
 # Hide warnings
 warnings.filterwarnings("ignore")
 
-# Load Firebase key
+# -----------------------------------
+# FIREBASE INITIALIZATION
+# -----------------------------------
+
 cred = credentials.Certificate("serviceAccountKey.json")
 
-# Prevent multiple initialization errors
+# Prevent duplicate Firebase initialization
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://aqualytics-649ed-default-rtdb.asia-southeast1.firebasedatabase.app'
     })
 
-# Load ML model
+# -----------------------------------
+# LOAD TRAINED MODEL
+# -----------------------------------
+
 model = pickle.load(open("model.pkl", "rb"))
 
-# Connect ONLY to waterData
+# -----------------------------------
+# DATABASE REFERENCES
+# -----------------------------------
+
+# Reads sensor data from this node
 water_data_ref = db.reference("waterData")
 
-# Track last processed timestamp
+# Saves ML predictions to this node
+prediction_ref = db.reference("predictions")
+
+# -----------------------------------
+# TRACK PREVIOUS STATE
+# -----------------------------------
+
+# Prevent duplicate prediction processing
 last_timestamp = None
 
-# Track previous values for anomaly detection
+# Store previous values for anomaly detection
 previous_ph = None
 previous_turbidity = None
 previous_tds = None
 previous_temperature = None
 
+print("===================================")
 print("ML Prediction System Started...")
+print("Waiting for realtime sensor data...")
+print("===================================")
+
+# -----------------------------------
+# MAIN LOOP
+# -----------------------------------
 
 while True:
 
     try:
 
-        data = water_data_ref.order_by_child("timestamp").limit_to_last(1).get()
+        # -----------------------------------
+        # GET LATEST WATER RECORD
+        # -----------------------------------
 
-        # Check if water data exists
+        data = (
+            water_data_ref
+            .order_by_child("timestamp")
+            .limit_to_last(1)
+            .get()
+        )
+
+        # No data check
         if not data:
             print("No water data found...")
             time.sleep(5)
             continue
 
-        water_data = data
+        # Ensure valid dictionary
+        if not isinstance(data, dict) or len(data) == 0:
+            print("Invalid Firebase data format...")
+            time.sleep(5)
+            continue
 
-        # Get latest reading safely
-        latest_key = list(water_data.keys())[0]
-        latest_data = water_data[latest_key]
+        # Get latest record safely
+        latest_key = next(iter(data))
+        latest_data = data[latest_key]
 
-        # Required fields check
+        # -----------------------------------
+        # REQUIRED FIELD VALIDATION
+        # -----------------------------------
+
         required_fields = [
             "ph",
             "turbidity",
@@ -63,36 +101,53 @@ while True:
             "timestamp"
         ]
 
+        # Check required fields exist
         if not all(field in latest_data for field in required_fields):
-            print("Missing required values...")
+            print("Missing required sensor values...")
             time.sleep(5)
             continue
 
-        # Avoid duplicate processing
-        if latest_data.get("timestamp") == last_timestamp:
+        # -----------------------------------
+        # PREVENT DUPLICATE PROCESSING
+        # -----------------------------------
+
+        current_timestamp = latest_data.get("timestamp")
+
+        if current_timestamp == last_timestamp:
             time.sleep(5)
             continue
 
-        last_timestamp = latest_data.get("timestamp")
+        # Update last timestamp
+        last_timestamp = current_timestamp
 
-        # Get sensor values safely
-        ph = latest_data.get("ph")
-        turbidity = latest_data.get("turbidity")
-        tds = latest_data.get("tds")
-        temperature = latest_data.get("temperature")
+        # -----------------------------------
+        # SAFE SENSOR VALUE CONVERSION
+        # -----------------------------------
 
-        # Null / empty value check
-        if (
-            ph is None or
-            turbidity is None or
-            tds is None or
-            temperature is None
-        ):
-            print("Null sensor values detected...")
+        try:
+
+            ph = float(latest_data.get("ph"))
+            turbidity = float(latest_data.get("turbidity"))
+            tds = float(latest_data.get("tds"))
+            temperature = float(latest_data.get("temperature"))
+
+        except (TypeError, ValueError):
+
+            print("Invalid sensor data types... Clearing tracking state to avoid anomalies.")
+            # FIX: Clear previous state tracking values so a recovery on the 
+            # next loop won't calculate sudden changes using stale history.
+            previous_ph = None
+            previous_turbidity = None
+            previous_tds = None
+            previous_temperature = None
+            
             time.sleep(5)
             continue
 
-        # Create dataframe
+        # -----------------------------------
+        # CREATE DATAFRAME FOR MODEL
+        # -----------------------------------
+
         input_df = pd.DataFrame(
             [[ph, turbidity, tds, temperature]],
             columns=[
@@ -103,83 +158,133 @@ while True:
             ]
         )
 
-        # ML prediction
+        # -----------------------------------
+        # ML PREDICTION
+        # -----------------------------------
+
         prediction = model.predict(input_df)[0]
 
-        # Convert prediction to status
+        # Convert prediction to readable label
         status = "Unsafe Water" if prediction == 1 else "Safe Water"
 
-        # -------------------------------
+        # -----------------------------------
         # ANOMALY DETECTION
-        # -------------------------------
+        # -----------------------------------
 
         anomaly = False
         anomaly_reason = "Normal"
 
-        # Threshold-based anomalies
+        # -------------------------
+        # Threshold-Based Detection
+        # -------------------------
+
         if ph < 5 or ph > 9:
+
             anomaly = True
             anomaly_reason = "Abnormal pH"
 
         elif turbidity > 150:
+
             anomaly = True
             anomaly_reason = "High Turbidity"
 
         elif temperature > 45:
+
             anomaly = True
             anomaly_reason = "High Temperature"
 
-        # Sudden change detection
+        elif tds > 1000:
+
+            anomaly = True
+            anomaly_reason = "High TDS"
+
+        # -------------------------
+        # Sudden Change Detection
+        # -------------------------
+
         if previous_ph is not None:
+
             if abs(ph - previous_ph) > 2:
+
                 anomaly = True
                 anomaly_reason = "Sudden pH Change"
 
         if previous_turbidity is not None:
+
             if abs(turbidity - previous_turbidity) > 50:
+
                 anomaly = True
                 anomaly_reason = "Sudden Turbidity Change"
 
-        # Update previous values
+        if previous_temperature is not None:
+
+            if abs(temperature - previous_temperature) > 10:
+
+                anomaly = True
+                anomaly_reason = "Sudden Temperature Change"
+
+        # -----------------------------------
+        # UPDATE PREVIOUS VALUES
+        # -----------------------------------
+
         previous_ph = ph
         previous_turbidity = turbidity
         previous_tds = tds
         previous_temperature = temperature
 
-        # -------------------------------
-        # Console Output
-        # -------------------------------
+        # -----------------------------------
+        # CONSOLE OUTPUT
+        # -----------------------------------
 
-        print("\n--- Live Prediction ---")
-        print(f"pH: {ph}")
-        print(f"Temperature: {temperature} °C")
-        print(f"TDS: {tds}")
-        print(f"Turbidity: {turbidity}")
-        print(f"Prediction: {status}")
+        print("\n========== LIVE PREDICTION ==========")
+
+        print(f"pH          : {ph}")
+        print(f"Temperature : {temperature} °C")
+        print(f"TDS         : {tds}")
+        print(f"Turbidity   : {turbidity}")
+
+        print("-------------------------------------")
+
+        print(f"Prediction  : {status}")
 
         if anomaly:
-            print(f"⚠️ Anomaly Detected: {anomaly_reason}")
+
+            print(f"⚠️ Anomaly   : {anomaly_reason}")
+
         else:
-            print("No anomalies detected")
 
-        # -------------------------------
-        # Save prediction to Firebase
-        # -------------------------------
+            print("Anomaly     : None")
 
-        db.reference("predictions").push({
+        print("=====================================")
+
+        # -----------------------------------
+        # SAVE RESULTS TO FIREBASE
+        # -----------------------------------
+
+        prediction_ref.push({
+
             "ph": ph,
             "temperature": temperature,
             "tds": tds,
             "turbidity": turbidity,
+
             "prediction": int(prediction),
             "status": status,
+
             "anomaly": anomaly,
             "anomaly_reason": anomaly_reason,
-            "timestamp": latest_data.get("timestamp")
+
+            "timestamp": current_timestamp
         })
 
+        print("Prediction saved to Firebase.")
+
     except Exception as e:
+
         print("System Error:", e)
 
-    # Wait before next reading
+    # -----------------------------------
+    # WAIT BEFORE NEXT CHECK
+    # -----------------------------------
+
     time.sleep(5)
