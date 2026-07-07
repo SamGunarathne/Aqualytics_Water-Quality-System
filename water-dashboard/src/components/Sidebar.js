@@ -4,19 +4,24 @@ import {
   FaTachometerAlt,
   FaWater,
   FaBell,
-  FaCog
+  FaFileExcel
 } from "react-icons/fa";
 
-function Sidebar({ setPage, setSelectedSensor, darkMode }) {
+function Sidebar({
+ setPage,
+ setSelectedSensor,
+ darkMode,
+ handleLogout,
+ exportExcel
+}) {
 
   const [active, setActive] = useState("Dashboard");
 
   const menuItems = [
-    { name: "Dashboard", icon: <FaTachometerAlt /> },
-    { name: "Water Data", icon: <FaWater /> },
-    { name: "Alerts", icon: <FaBell /> }
-  
-  ];
+ { name:"Dashboard", icon:<FaTachometerAlt/> },
+ { name:"Water Data", icon:<FaWater/> },
+ { name:"Alerts", icon:<FaBell/> },
+];
 
   const handleMenuClick = (name) => {
   setActive(name);
@@ -36,10 +41,7 @@ function Sidebar({ setPage, setSelectedSensor, darkMode }) {
     setSelectedSensor("");
   }
 
-  if (name === "Settings") {
-    setPage("settings");
-    setSelectedSensor("");
-  }
+  
 };
 
   return (
@@ -131,6 +133,8 @@ function Sidebar({ setPage, setSelectedSensor, darkMode }) {
           </ul>
 
         </div>
+        
+        
 
         {/* FOOTER */}
         <div style={{
@@ -140,6 +144,40 @@ function Sidebar({ setPage, setSelectedSensor, darkMode }) {
             : "1px solid #cbd5e1",
           color: darkMode ? "#64748b" : "#475569"
         }}>
+          <button
+            onClick={exportExcel}
+            style={{
+            width:"90%",
+            padding:"12px",
+            margin:"10px auto",
+            display:"block",
+            borderRadius:"12px",
+            border:"none",
+            cursor:"pointer",
+            background:"#22c55e",
+            color:"white",
+            fontWeight:"600"
+            }}
+            >
+            📥 Export Excel
+            </button>
+         <button
+          onClick={handleLogout}
+          style={{
+            width:"90%",
+            padding:"12px",
+            margin:"20px auto",
+            display:"block",
+            borderRadius:"12px",
+            border:"none",
+            cursor:"pointer",
+            background:"#334155",
+            color:"white",
+            fontWeight:"600"
+          }}
+          >
+          Logout
+          </button> 
           <p>🟢 System Online</p>
           <small>v1.0.0</small>
         </div>
