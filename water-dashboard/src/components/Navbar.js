@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Bell,
-  Search,
-  Droplets,
+  TriangleAlert,
   Sun,
   Moon
 } from "lucide-react";
@@ -11,7 +10,8 @@ import {
   darkMode,
   setDarkMode,
   setPage,
-  alertCount
+  alertCount,
+  anomalyCount
 }){
 
   const [dateTime, setDateTime] = useState("");
@@ -260,6 +260,7 @@ import {
             
           )}
         </div>
+
 
         {/* DARK MODE BUTTON */}
         <button
