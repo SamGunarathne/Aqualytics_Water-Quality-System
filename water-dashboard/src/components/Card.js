@@ -21,11 +21,12 @@ ChartJS.register(
 function Card({
   title,
   value,
+  prediction,
   unit,
   darkMode,
   history = [],
   onClick
-}) {
+}){
 
   // ================= STATUS LOGIC =================
   const getStatus = () => {
@@ -56,15 +57,16 @@ function Card({
       const getIcon = () => {
       switch (title) {
         case "pH":
-          return <Beaker size={24} color="#22c55e" />;
+          return <Droplets size={22} color="#3b82f6" />;
+
         case "Turbidity":
-          return <Waves size={24} color="#22c55e" />;
+          return <Waves size={22} color="#16a34a" />;
+
         case "Temperature":
-          return <Thermometer size={24} color="#22c55e" />;
+          return <Thermometer size={22} color="#f59e0b" />;
+
         case "TDS":
-          return <Droplets size={24} color="#22c55e" />;
-        default:
-          return <Droplets size={24} color="#22c55e" />;
+          return <Beaker size={22} color="#a855f7" />;
       }
     };
 
@@ -141,111 +143,155 @@ function Card({
       
         
     >
-
-          <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start"
-      }}
-    >
-      {/* Left */}
-      <div style={{ flex: 1 }}>
+      
+      <div
+       
+      >
         <div
           style={{
-            width: "55px",
-            height: "55px",
-            borderRadius: "18px",
-            background: "#dcfce7",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "15px"
+            display: "grid",
+            gridTemplateColumns: "1fr 95px",
+            gap: "10px",
+            alignItems: "center"
           }}
         >
-          {getIcon()}
-        </div>
+          {/* LEFT */}
+          <div>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 12,
+                background: "#eef6ff",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 8
+              }}
+            >
+              {getIcon()}
+            </div>
 
-        <h4
-          style={{
-            margin: 0,
-            color: darkMode ? "#cbd5e1" : "#475569"
-          }}
-        >
-          {title}
-        </h4>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#64748b",
+                fontWeight: 600
+              }}
+            >
+              {title}
+            </div>
 
-        <h2
-          style={{
-            margin: "6px 0",
-            color: "#16a34a",
-            fontSize: "34px"
-          }}
-        >
-          {value}
-          <span
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: "700",
+                color: "#2563eb",
+                marginTop: 5
+              }}
+            >
+              {value}
+              <span
+                style={{
+                  fontSize: 13,
+                  marginLeft: 5,
+                  color: "#64748b"
+                }}
+              >
+                {unit}
+              </span>
+            </div>
+            <p
             style={{
-              fontSize: "16px",
-              marginLeft: "6px"
+              marginTop: "6px",
+              marginBottom: "8px",
+              fontSize: "13px",
+              fontWeight: "600",
+              color: darkMode ? "#cbd5e1" : "#475569"
             }}
           >
-            {unit}
-          </span>
-        </h2>
+            Predicted: {prediction?.toFixed(2)} {unit}
+          </p>
+          </div>
 
-        <p
-          style={{
-            color:
-              status === "safe"
-                ? "#22c55e"
+          {/* MINI CHART */}
+          <div
+            style={{
+              width: 90,
+              height: 55
+            }}
+          >
+            {history.length > 1 && (
+              <Line
+                data={chartData}
+                options={chartOptions}
+              />
+            )}
+          </div>
+
+          {/* STATUS */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background:
+                  status === "safe"
+                    ? "#22c55e"
+                    : status === "warning"
+                    ? "#f59e0b"
+                    : "#ef4444"
+              }}
+            />
+
+            <span
+              style={{
+                color:
+                  status === "safe"
+                    ? "#22c55e"
+                    : status === "warning"
+                    ? "#f59e0b"
+                    : "#ef4444",
+                fontWeight: 600,
+                fontSize: 12
+              }}
+            >
+              {status === "safe"
+                ? "Normal"
                 : status === "warning"
-                ? "#f59e0b"
-                : "#ef4444",
-            fontWeight: "600",
-            margin: "8px 0"
-          }}
-        >
-          ● {status === "safe"
-            ? "Good"
-            : status === "warning"
-            ? "Warning"
-            : "Danger"}
-        </p>
+                ? "Warning"
+                : "Danger"}
+            </span>
+          </div>
 
-        <p
-          style={{
-            margin: 0,
-            fontSize: "13px",
-            color: "#64748b"
-          }}
-        >
-          {getRange()}
-        </p>
-
-        <small
-          style={{
-            color: "#64748b"
-          }}
-        >
-          Safe Range
-        </small>
+          {/* SAFE RANGE */}
+          <div
+            style={{
+              fontSize: 11,
+              color: "#64748b",
+              marginTop: -8
+            }}
+          >
+            <div>{getRange()}</div>
+            <div>Safe Range</div>
+          </div>
+        </div>
       </div>
+    
 
-      {/* Right Chart */}
-      <div
-        style={{
-          width: "110px",
-          height: "70px",
-          marginTop: "20px"
-        }}
-      >
-        {history.length > 1 && (
-          <Line
-            data={chartData}
-            options={chartOptions}
-          />
-        )}
-      </div>
+          <div
+      
+    >
+      
+
+      
     </div>
 
     </div>
@@ -253,14 +299,14 @@ function Card({
 }
 
 const styles = {
-    card: {
-    padding: "22px",
-    borderRadius: "22px",
-    width: "100%",
-    cursor: "pointer",
-    transition: "0.3s",
-    minHeight: "20px"
-  },
+  card: {
+  width: "100%",
+  minHeight: "150px",
+  borderRadius: "18px",
+  padding: "18px",
+  cursor: "pointer",
+  transition: "0.3s"
+},
 
   title: {
     fontSize: "16px",
