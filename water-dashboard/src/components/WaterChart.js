@@ -34,7 +34,7 @@ function WaterChart({ history }) {
 
     const handleResize = () => {
 
-      if (window.innerWidth < 768) {
+      if (screen.innerWidth < 768) {
         setChartHeight(250);
       } else {
         setChartHeight(350);
@@ -144,7 +144,7 @@ function WaterChart({ history }) {
           color: "#94a3b8",
 
           font: {
-            size: window.innerWidth < 768 ? 10 : 12
+            size: screen.innerWidth < 768 ? 10 : 12
           }
         }
       },
@@ -157,7 +157,7 @@ function WaterChart({ history }) {
         color: "#38bdf8",
 
         font: {
-          size: window.innerWidth < 768 ? 12 : 16
+          size: screen.innerWidth < 768 ? 12 : 16
         }
       },
 
@@ -181,7 +181,7 @@ function WaterChart({ history }) {
           color: "#94a3b8",
 
           maxTicksLimit:
-            window.innerWidth < 768 ? 5 : 10
+            screen.innerWidth < 768 ? 5 : 10
         },
 
         grid: {
