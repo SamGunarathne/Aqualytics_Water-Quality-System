@@ -225,6 +225,7 @@ const exportExcel = () => {
 
       // ✅ GET LATEST DATA
       const latest = dataArray[dataArray.length - 1];
+      console.log(`[${new Date().toLocaleTimeString()}] 🟢 Connected to Firebase. Latest update:`, latest);
 
       // =========================================
       // UPDATE LIVE SENSOR DATA
