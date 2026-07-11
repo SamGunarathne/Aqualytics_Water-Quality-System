@@ -6,10 +6,12 @@
 
 const express = require('express');
 const app = express();
-
 const mqtt = require('mqtt');
 const admin = require('firebase-admin');
 const fs = require('fs-extra');
+
+// Load environment variables if you are using a .env file locally
+// require('dotenv').config(); 
 
 const PORT = process.env.PORT || 3000;
 
@@ -34,7 +36,6 @@ const BUFFER_FILE = './buffer.json';
 
 // Create buffer file if not exists
 if (!fs.existsSync(BUFFER_FILE)) {
-
   fs.writeJsonSync(BUFFER_FILE, []);
 }
 
@@ -43,15 +44,14 @@ if (!fs.existsSync(BUFFER_FILE)) {
 // ==========================================
 
 const client = mqtt.connect(
-  'mqtt://n4f81861.ala.asia-southeast1.emqxsl.com:8883',
+  'mqtts://n4f81861.ala.asia-southeast1.emqxsl.com:8883', // Fixed: mqtts:// instead of mqtt://
   {
-
-    //username: process.env.MQTT_USERNAME,
-
-    //password: process.env.MQTT_PASSWORD,
-
-    clientId: 'aqualytics-backend-' + Math.random().toString(16).substr(2, 8),
-
+    username: process.env.MQTT_USERNAME, // Fixed: Uncommented credentials
+    password: process.env.MQTT_PASSWORD, 
+    
+    // Fixed: Static Client ID so clean: false recovers missed messages correctly
+    clientId: 'aqualytics-backend-service', 
+    
     clean: false,
     reconnectPeriod: 5000,
     rejectUnauthorized: false
@@ -63,9 +63,7 @@ const client = mqtt.connect(
 // ==========================================
 
 async function uploadToFirebase(payload) {
-
   try {
-
     await db.ref('waterData').push(payload);
     return true;
   } catch (err) {
@@ -78,7 +76,6 @@ async function uploadToFirebase(payload) {
 // ==========================================
 
 async function bufferLocally(payload) {
-
   try {
     let buffer = await fs.readJson(BUFFER_FILE);
     buffer.push(payload);
@@ -94,7 +91,6 @@ async function bufferLocally(payload) {
 // ==========================================
 
 async function flushBufferedData() {
-
   try {
     let buffer = await fs.readJson(BUFFER_FILE);
     if (buffer.length === 0) {
@@ -124,7 +120,6 @@ async function flushBufferedData() {
 // ==========================================
 
 client.on('connect', async () => {
-
   console.log('✅ MQTT Connected');
 
   // Flush old buffered data
@@ -135,13 +130,9 @@ client.on('connect', async () => {
     'water/quality',
     { qos: 1 },
     (err) => {
-
       if (err) {
-
         console.log('❌ MQTT Subscribe Error:', err);
-
       } else {
-
         console.log('📡 Subscribed to water/quality');
       }
     }
@@ -153,17 +144,14 @@ client.on('connect', async () => {
 // ==========================================
 
 client.on('reconnect', () => {
-
   console.log('🔄 MQTT Reconnecting...');
 });
 
 client.on('offline', () => {
-
   console.log('⚠ MQTT Offline');
 });
 
 client.on('error', (err) => {
-
   console.log('❌ MQTT Error:', err);
 });
 
@@ -172,9 +160,7 @@ client.on('error', (err) => {
 // ==========================================
 
 client.on('message', async (topic, message) => {
-
   try {
-
     console.log('📥 Raw MQTT Message:', message.toString());
 
     // Parse incoming JSON
@@ -182,15 +168,10 @@ client.on('message', async (topic, message) => {
 
     // Create payload
     const payload = {
-
       ph: data.ph,
-
       temperature: data.temperature,
-
       tds: data.tds,
-
       turbidity: data.turbidity,
-
       timestamp: Date.now()
     };
 
@@ -199,28 +180,21 @@ client.on('message', async (topic, message) => {
     // ======================================
 
     try {
-
       await uploadToFirebase(payload);
 
       if (process.env.NODE_ENV === 'development') {
-
         console.log('📤 Data saved:', payload);
-
       } else {
-
         console.log('📤 Data saved');
       }
 
     } catch (firebaseError) {
-
       console.log('⚠ Firebase Upload Failed');
-
       // Save locally
       await bufferLocally(payload);
     }
 
   } catch (error) {
-
     console.log('❌ Error processing MQTT message:', error);
   }
 });
@@ -230,7 +204,6 @@ client.on('message', async (topic, message) => {
 // ==========================================
 
 app.get('/', (req, res) => {
-
   res.send('Aqualytics MQTT Service Running');
 });
 
@@ -239,13 +212,9 @@ app.get('/', (req, res) => {
 // ==========================================
 
 app.get('/health', (req, res) => {
-
   res.status(200).json({
-
     status: 'OK',
-
     mqtt: client.connected ? 'connected' : 'disconnected',
-
     timestamp: new Date()
   });
 });
@@ -255,6 +224,5 @@ app.get('/health', (req, res) => {
 // ==========================================
 
 app.listen(PORT, () => {
-
   console.log(`🚀 Server running on port ${PORT}`);
 });
