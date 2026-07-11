@@ -43,7 +43,7 @@ if (!fs.existsSync(BUFFER_FILE)) {
 // ==========================================
 
 const client = mqtt.connect(
-  'mqtt://broker.emqx.io:8883',
+  'mqtt://n4f81861.ala.asia-southeast1.emqxsl.com:8883',
   {
 
     //username: process.env.MQTT_USERNAME,
