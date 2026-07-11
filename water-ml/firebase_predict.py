@@ -134,7 +134,7 @@ while True:
         except (TypeError, ValueError):
 
             print("Invalid sensor data types... Clearing tracking state to avoid anomalies.")
-            # FIX: Clear previous state tracking values so a recovery on the 
+            # Clear previous state tracking values so a recovery on the 
             # next loop won't calculate sudden changes using stale history.
             previous_ph = None
             previous_turbidity = None

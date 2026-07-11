@@ -20,6 +20,9 @@ def label_water(row):
     if row["temperature"] > 45:
         return 1
 
+    if row["tds"] > 1000:
+        return 1
+
     return 0
 
 # Create labels
